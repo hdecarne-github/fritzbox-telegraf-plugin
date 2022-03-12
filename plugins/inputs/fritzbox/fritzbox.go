@@ -196,15 +196,15 @@ func (fb *FritzBox) processWLANConfigurationService(a telegraf.Accumulator, devi
 		tags := make(map[string]string)
 		tags["fritz_device"] = deviceInfo.BaseUrl.Hostname()
 		tags["service"] = service.ShortServiceId()
-		tags["ssid"] = info.SSID + "@" + info.Channel
+		tags["access_point"] = deviceInfo.BaseUrl.Hostname() + ":" + info.SSID + ":" + info.Channel
 		fields := make(map[string]interface{})
 		fields["total_associations"] = totalAssociations.TotalAssociations
 		if connectionInfoErr == nil && connectionInfo.SSID == info.SSID && connectionInfo.Channel == info.Channel {
-			fields["signal_strength"] = connectionInfo.SignalStrength
-			fields["speed"] = connectionInfo.Speed
-			fields["speed_rx"] = connectionInfo.SpeedRX
-			fields["speed_max"] = connectionInfo.SpeedMax
-			fields["speed_rx_max"] = connectionInfo.SpeedRXMax
+			fields["ci_signal_strength"] = connectionInfo.SignalStrength
+			fields["ci_speed"] = connectionInfo.Speed
+			fields["ci_speed_rx"] = connectionInfo.SpeedRX
+			fields["ci_speed_max"] = connectionInfo.SpeedMax
+			fields["ci_speed_rx_max"] = connectionInfo.SpeedRXMax
 		}
 		a.AddCounter("fritzbox_wlan", fields, tags)
 	}
