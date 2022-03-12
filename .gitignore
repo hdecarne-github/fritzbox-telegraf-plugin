@@ -17,3 +17,6 @@
 # Build artifacts
 .bin/*
 .go/*
+
+# Local configs
+*-local.conf
