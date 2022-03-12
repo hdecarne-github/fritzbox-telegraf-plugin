@@ -52,9 +52,10 @@ func (s *tr64DescDeviceService) ShortServiceId() string {
 type FritzBox struct {
 	Devices     [][]string `toml:"devices"`
 	Timeout     int        `toml:"timeout"`
-	GetWlanInfo bool       `toml:"get_wlan_info"`
-	GetWanInfo  bool       `toml:"get_wan_info"`
-	GetDslInfo  bool       `toml:"get_dsl_info"`
+	GetWLANInfo bool       `toml:"get_wlan_info"`
+	GetWANInfo  bool       `toml:"get_wan_info"`
+	GetDSLInfo  bool       `toml:"get_dsl_info"`
+	GetPPPInfo  bool       `toml:"get_ppp_info"`
 	Debug       bool       `toml:"debug"`
 
 	deviceInfos  map[string]*deviceInfo
@@ -65,9 +66,11 @@ func NewFritzBox() *FritzBox {
 	return &FritzBox{
 		Devices:     [][]string{{"fritz.box", "", ""}},
 		Timeout:     5,
-		GetWlanInfo: true,
-		GetWanInfo:  true,
-		GetDslInfo:  true,
+		GetWLANInfo: true,
+		GetWANInfo:  true,
+		GetDSLInfo:  true,
+		GetPPPInfo:  true,
+
 		deviceInfos: make(map[string]*deviceInfo)}
 }
 
@@ -77,11 +80,13 @@ func (fb *FritzBox) SampleConfig() string {
   # devices = [["http://fritz.box:49000", "", ""]]
   ## The http timeout to use (in seconds)
   # timeout = 5
-  ## Process wlan services (if found)
+  ## Process WLAN services (if found)
   # get_wlan_info = true
-  ## Process wan services (if found)
+  ## Process WAN services (if found)
   # get_wan_info = true
-  ## Process dsl services (if found)
+  ## Process DSL services (if found)
+  # get_dsl_info = true
+  ## Process PPP services (if found)
   # get_dsl_info = true
   ## Enable debug output
   # debug = false
@@ -141,16 +146,20 @@ func (fb *FritzBox) processServices(a telegraf.Accumulator, deviceInfo *deviceIn
 			log.Printf("Considering service type: %s", service.ServiceType)
 		}
 		if strings.HasPrefix(service.ServiceType, "urn:dslforum-org:service:WLANConfiguration:") {
-			if fb.GetWlanInfo {
-				a.AddError(fb.processWlanConfigurationService(a, deviceInfo, service))
+			if fb.GetWLANInfo {
+				a.AddError(fb.processWLANConfigurationService(a, deviceInfo, service))
 			}
 		} else if strings.HasPrefix(service.ServiceType, "urn:dslforum-org:service:WANCommonInterfaceConfig:") {
-			if fb.GetWanInfo {
-				a.AddError(fb.processWanCommonInterfaceConfigService(a, deviceInfo, service))
+			if fb.GetWANInfo {
+				a.AddError(fb.processWANCommonInterfaceConfigService(a, deviceInfo, service))
 			}
 		} else if strings.HasPrefix(service.ServiceType, "urn:dslforum-org:service:WANDSLInterfaceConfig:") {
-			if fb.GetDslInfo {
-				a.AddError(fb.processDslInterfaceConfigService(a, deviceInfo, service))
+			if fb.GetDSLInfo {
+				a.AddError(fb.processDSLInterfaceConfigService(a, deviceInfo, service))
+			}
+		} else if strings.HasPrefix(service.ServiceType, "urn:dslforum-org:service:WANPPPConnection:") {
+			if fb.GetPPPInfo {
+				a.AddError(fb.processPPPConnectionService(a, deviceInfo, service))
 			}
 		}
 
@@ -158,7 +167,7 @@ func (fb *FritzBox) processServices(a telegraf.Accumulator, deviceInfo *deviceIn
 	return nil
 }
 
-func (fb *FritzBox) processWlanConfigurationService(a telegraf.Accumulator, deviceInfo *deviceInfo, service tr64DescDeviceService) error {
+func (fb *FritzBox) processWLANConfigurationService(a telegraf.Accumulator, deviceInfo *deviceInfo, service tr64DescDeviceService) error {
 	info := struct {
 		Status  string `xml:"Body>GetInfoResponse>NewStatus"`
 		Channel string `xml:"Body>GetInfoResponse>NewChannel"`
@@ -178,9 +187,9 @@ func (fb *FritzBox) processWlanConfigurationService(a telegraf.Accumulator, devi
 	}
 	if info.Status == "Up" {
 		tags := make(map[string]string)
-		tags["device"] = deviceInfo.BaseUrl.Hostname()
+		tags["fritz_device"] = deviceInfo.BaseUrl.Hostname()
 		tags["service"] = service.ShortServiceId()
-		tags["wlan"] = info.SSID + "@" + info.Channel
+		tags["ssid"] = info.SSID + "@" + info.Channel
 		fields := make(map[string]interface{})
 		fields["total_pakets_sent"] = statistics.TotalPacketsSent
 		fields["total_pakets_received"] = statistics.TotalPacketsReceived
@@ -189,7 +198,7 @@ func (fb *FritzBox) processWlanConfigurationService(a telegraf.Accumulator, devi
 	return nil
 }
 
-func (fb *FritzBox) processWanCommonInterfaceConfigService(a telegraf.Accumulator, deviceInfo *deviceInfo, service tr64DescDeviceService) error {
+func (fb *FritzBox) processWANCommonInterfaceConfigService(a telegraf.Accumulator, deviceInfo *deviceInfo, service tr64DescDeviceService) error {
 	commonLinkProperties := struct {
 		Layer1UpstreamMaxBitRate   int    `xml:"Body>GetCommonLinkPropertiesResponse>NewLayer1UpstreamMaxBitRate"`
 		Layer1DownstreamMaxBitRate int    `xml:"Body>GetCommonLinkPropertiesResponse>NewLayer1DownstreamMaxBitRate"`
@@ -217,7 +226,7 @@ func (fb *FritzBox) processWanCommonInterfaceConfigService(a telegraf.Accumulato
 	}
 	if commonLinkProperties.PhysicalLinkStatus == "Up" {
 		tags := make(map[string]string)
-		tags["device"] = deviceInfo.BaseUrl.Hostname()
+		tags["fritz_device"] = deviceInfo.BaseUrl.Hostname()
 		tags["service"] = service.ShortServiceId()
 		fields := make(map[string]interface{})
 		fields["layer1_upstream_max_bit_rate"] = commonLinkProperties.Layer1UpstreamMaxBitRate
@@ -231,7 +240,7 @@ func (fb *FritzBox) processWanCommonInterfaceConfigService(a telegraf.Accumulato
 	return nil
 }
 
-func (fb *FritzBox) processDslInterfaceConfigService(a telegraf.Accumulator, deviceInfo *deviceInfo, service tr64DescDeviceService) error {
+func (fb *FritzBox) processDSLInterfaceConfigService(a telegraf.Accumulator, deviceInfo *deviceInfo, service tr64DescDeviceService) error {
 	info := struct {
 		Status                string `xml:"Body>GetInfoResponse>NewStatus"`
 		UpstreamCurrRate      int    `xml:"Body>GetInfoResponse>NewUpstreamCurrRate"`
@@ -272,7 +281,7 @@ func (fb *FritzBox) processDslInterfaceConfigService(a telegraf.Accumulator, dev
 	}
 	if info.Status == "Up" {
 		tags := make(map[string]string)
-		tags["device"] = deviceInfo.BaseUrl.Hostname()
+		tags["fritz_device"] = deviceInfo.BaseUrl.Hostname()
 		tags["service"] = service.ShortServiceId()
 		fields := make(map[string]interface{})
 		fields["upstream_curr_rate"] = info.UpstreamCurrRate
@@ -301,6 +310,30 @@ func (fb *FritzBox) processDslInterfaceConfigService(a telegraf.Accumulator, dev
 		fields["crc_errors"] = statisticsTotal.CRCErrors
 		fields["atuc_crc_errors"] = statisticsTotal.ATUCCRCErrors
 		a.AddCounter("fritzbox_dsl", fields, tags)
+	}
+	return nil
+}
+
+func (fb *FritzBox) processPPPConnectionService(a telegraf.Accumulator, deviceInfo *deviceInfo, service tr64DescDeviceService) error {
+	info := struct {
+		ConnectionStatus     string `xml:"Body>GetInfoResponse>NewConnectionStatus"`
+		Uptime               int    `xml:"Body>GetInfoResponse>NewUptime"`
+		UpstreamMaxBitRate   int    `xml:"Body>GetInfoResponse>NewUpstreamMaxBitRate"`
+		DownstreamMaxBitRate int    `xml:"Body>GetInfoResponse>NewDownstreamMaxBitRate"`
+	}{}
+	err := fb.invokeDeviceService(deviceInfo, &service, "GetInfo", &info)
+	if err != nil {
+		return err
+	}
+	if info.ConnectionStatus == "Connected" {
+		tags := make(map[string]string)
+		tags["fritz_device"] = deviceInfo.BaseUrl.Hostname()
+		tags["service"] = service.ShortServiceId()
+		fields := make(map[string]interface{})
+		fields["uptime"] = info.Uptime
+		fields["upstream_max_bit_rate"] = info.UpstreamMaxBitRate
+		fields["downstream_max_bit_rate"] = info.DownstreamMaxBitRate
+		a.AddCounter("fritzbox_ppp", fields, tags)
 	}
 	return nil
 }
