@@ -188,7 +188,7 @@ func (fb *FritzBox) processWLANConfigurationService(a telegraf.Accumulator, devi
 		return err
 	}
 	totalAssociations := struct {
-		TotalAssociations int `xml:"Body>GetTotalAssociationsResponse>NewTotalAssociations"`
+		TotalAssociations uint `xml:"Body>GetTotalAssociationsResponse>NewTotalAssociations"`
 	}{}
 	err = fb.invokeDeviceService(deviceInfo, service, "GetTotalAssociations", &totalAssociations)
 	if err != nil {
@@ -208,25 +208,25 @@ func (fb *FritzBox) processWLANConfigurationService(a telegraf.Accumulator, devi
 
 func (fb *FritzBox) processWANCommonInterfaceConfigService(a telegraf.Accumulator, deviceInfo *deviceInfo, service *tr64DescDeviceService) error {
 	commonLinkProperties := struct {
-		Layer1UpstreamMaxBitRate   int    `xml:"Body>GetCommonLinkPropertiesResponse>NewLayer1UpstreamMaxBitRate"`
-		Layer1DownstreamMaxBitRate int    `xml:"Body>GetCommonLinkPropertiesResponse>NewLayer1DownstreamMaxBitRate"`
+		Layer1UpstreamMaxBitRate   uint   `xml:"Body>GetCommonLinkPropertiesResponse>NewLayer1UpstreamMaxBitRate"`
+		Layer1DownstreamMaxBitRate uint   `xml:"Body>GetCommonLinkPropertiesResponse>NewLayer1DownstreamMaxBitRate"`
 		PhysicalLinkStatus         string `xml:"Body>GetCommonLinkPropertiesResponse>NewPhysicalLinkStatus"`
-		UpstreamCurrentMaxSpeed    int    `xml:"Body>GetCommonLinkPropertiesResponse>NewX_AVM-DE_UpstreamCurrentMaxSpeed"`
-		DownstreamCurrentMaxSpeed  int    `xml:"Body>GetCommonLinkPropertiesResponse>NewX_AVM-DE_DownstreamCurrentMaxSpeed"`
+		UpstreamCurrentMaxSpeed    uint   `xml:"Body>GetCommonLinkPropertiesResponse>NewX_AVM-DE_UpstreamCurrentMaxSpeed"`
+		DownstreamCurrentMaxSpeed  uint   `xml:"Body>GetCommonLinkPropertiesResponse>NewX_AVM-DE_DownstreamCurrentMaxSpeed"`
 	}{}
 	err := fb.invokeDeviceService(deviceInfo, service, "GetCommonLinkProperties", &commonLinkProperties)
 	if err != nil {
 		return err
 	}
 	totalBytesSent := struct {
-		TotalBytesSent int `xml:"Body>GetTotalBytesSentResponse>NewTotalBytesSent"`
+		TotalBytesSent uint `xml:"Body>GetTotalBytesSentResponse>NewTotalBytesSent"`
 	}{}
 	err = fb.invokeDeviceService(deviceInfo, service, "GetTotalBytesSent", &totalBytesSent)
 	if err != nil {
 		return err
 	}
 	totalBytesReceived := struct {
-		TotalBytesReceived int `xml:"Body>GetTotalBytesReceivedResponse>NewTotalBytesReceived"`
+		TotalBytesReceived uint `xml:"Body>GetTotalBytesReceivedResponse>NewTotalBytesReceived"`
 	}{}
 	err = fb.invokeDeviceService(deviceInfo, service, "GetTotalBytesReceived", &totalBytesReceived)
 	if err != nil {
@@ -251,37 +251,37 @@ func (fb *FritzBox) processWANCommonInterfaceConfigService(a telegraf.Accumulato
 func (fb *FritzBox) processDSLInterfaceConfigService(a telegraf.Accumulator, deviceInfo *deviceInfo, service *tr64DescDeviceService) error {
 	info := struct {
 		Status                string `xml:"Body>GetInfoResponse>NewStatus"`
-		UpstreamCurrRate      int    `xml:"Body>GetInfoResponse>NewUpstreamCurrRate"`
-		DownstreamCurrRate    int    `xml:"Body>GetInfoResponse>NewDownstreamCurrRate"`
-		UpstreamMaxRate       int    `xml:"Body>GetInfoResponse>NewUpstreamMaxRate"`
-		DownstreamMaxRate     int    `xml:"Body>GetInfoResponse>NewDownstreamMaxRate"`
-		UpstreamNoiseMargin   int    `xml:"Body>GetInfoResponse>NewUpstreamNoiseMargin"`
-		DownstreamNoiseMargin int    `xml:"Body>GetInfoResponse>NewDownstreamNoiseMargin"`
-		UpstreamAttenuation   int    `xml:"Body>GetInfoResponse>NewUpstreamAttenuation"`
-		DownstreamAttenuation int    `xml:"Body>GetInfoResponse>NewDownstreamAttenuation"`
-		UpstreamPower         int    `xml:"Body>GetInfoResponse>NewUpstreamPower"`
-		DownstreamPower       int    `xml:"Body>GetInfoResponse>NewDownstreamPower"`
+		UpstreamCurrRate      uint   `xml:"Body>GetInfoResponse>NewUpstreamCurrRate"`
+		DownstreamCurrRate    uint   `xml:"Body>GetInfoResponse>NewDownstreamCurrRate"`
+		UpstreamMaxRate       uint   `xml:"Body>GetInfoResponse>NewUpstreamMaxRate"`
+		DownstreamMaxRate     uint   `xml:"Body>GetInfoResponse>NewDownstreamMaxRate"`
+		UpstreamNoiseMargin   uint   `xml:"Body>GetInfoResponse>NewUpstreamNoiseMargin"`
+		DownstreamNoiseMargin uint   `xml:"Body>GetInfoResponse>NewDownstreamNoiseMargin"`
+		UpstreamAttenuation   uint   `xml:"Body>GetInfoResponse>NewUpstreamAttenuation"`
+		DownstreamAttenuation uint   `xml:"Body>GetInfoResponse>NewDownstreamAttenuation"`
+		UpstreamPower         uint   `xml:"Body>GetInfoResponse>NewUpstreamPower"`
+		DownstreamPower       uint   `xml:"Body>GetInfoResponse>NewDownstreamPower"`
 	}{}
 	err := fb.invokeDeviceService(deviceInfo, service, "GetInfo", &info)
 	if err != nil {
 		return err
 	}
 	statisticsTotal := struct {
-		ReceiveBlocks       int `xml:"Body>GetStatisticsTotalResponse>NewReceiveBlocks"`
-		TransmitBlocks      int `xml:"Body>GetStatisticsTotalResponse>NewTransmitBlocks"`
-		CellDelin           int `xml:"Body>GetStatisticsTotalResponse>NewCellDelin"`
-		LinkRetrain         int `xml:"Body>GetStatisticsTotalResponse>NewLinkRetrain"`
-		InitErrors          int `xml:"Body>GetStatisticsTotalResponse>NewInitErrors"`
-		InitTimeouts        int `xml:"Body>GetStatisticsTotalResponse>NewInitTimeouts"`
-		LossOfFraming       int `xml:"Body>GetStatisticsTotalResponse>NewLossOfFraming"`
-		ErroredSecs         int `xml:"Body>GetStatisticsTotalResponse>NewErroredSecs"`
-		SeverelyErroredSecs int `xml:"Body>GetStatisticsTotalResponse>NewSeverelyErroredSecs"`
-		FECErrors           int `xml:"Body>GetStatisticsTotalResponse>NewFECErrors"`
-		ATUCFECErrors       int `xml:"Body>GetStatisticsTotalResponse>NewATUCFECErrors"`
-		HECErrors           int `xml:"Body>GetStatisticsTotalResponse>NewHECErrors"`
-		ATUCHECErrors       int `xml:"Body>GetStatisticsTotalResponse>NewATUCHECErrors"`
-		CRCErrors           int `xml:"Body>GetStatisticsTotalResponse>NewCRCErrors"`
-		ATUCCRCErrors       int `xml:"Body>GetStatisticsTotalResponse>NewATUCCRCErrors"`
+		ReceiveBlocks       uint `xml:"Body>GetStatisticsTotalResponse>NewReceiveBlocks"`
+		TransmitBlocks      uint `xml:"Body>GetStatisticsTotalResponse>NewTransmitBlocks"`
+		CellDelin           uint `xml:"Body>GetStatisticsTotalResponse>NewCellDelin"`
+		LinkRetrain         uint `xml:"Body>GetStatisticsTotalResponse>NewLinkRetrain"`
+		InitErrors          uint `xml:"Body>GetStatisticsTotalResponse>NewInitErrors"`
+		InitTimeouts        uint `xml:"Body>GetStatisticsTotalResponse>NewInitTimeouts"`
+		LossOfFraming       uint `xml:"Body>GetStatisticsTotalResponse>NewLossOfFraming"`
+		ErroredSecs         uint `xml:"Body>GetStatisticsTotalResponse>NewErroredSecs"`
+		SeverelyErroredSecs uint `xml:"Body>GetStatisticsTotalResponse>NewSeverelyErroredSecs"`
+		FECErrors           uint `xml:"Body>GetStatisticsTotalResponse>NewFECErrors"`
+		ATUCFECErrors       uint `xml:"Body>GetStatisticsTotalResponse>NewATUCFECErrors"`
+		HECErrors           uint `xml:"Body>GetStatisticsTotalResponse>NewHECErrors"`
+		ATUCHECErrors       uint `xml:"Body>GetStatisticsTotalResponse>NewATUCHECErrors"`
+		CRCErrors           uint `xml:"Body>GetStatisticsTotalResponse>NewCRCErrors"`
+		ATUCCRCErrors       uint `xml:"Body>GetStatisticsTotalResponse>NewATUCCRCErrors"`
 	}{}
 	err = fb.invokeDeviceService(deviceInfo, service, "GetStatisticsTotal", &statisticsTotal)
 	if err != nil {
@@ -325,9 +325,9 @@ func (fb *FritzBox) processDSLInterfaceConfigService(a telegraf.Accumulator, dev
 func (fb *FritzBox) processPPPConnectionService(a telegraf.Accumulator, deviceInfo *deviceInfo, service *tr64DescDeviceService) error {
 	info := struct {
 		ConnectionStatus     string `xml:"Body>GetInfoResponse>NewConnectionStatus"`
-		Uptime               int    `xml:"Body>GetInfoResponse>NewUptime"`
-		UpstreamMaxBitRate   int    `xml:"Body>GetInfoResponse>NewUpstreamMaxBitRate"`
-		DownstreamMaxBitRate int    `xml:"Body>GetInfoResponse>NewDownstreamMaxBitRate"`
+		Uptime               uint   `xml:"Body>GetInfoResponse>NewUptime"`
+		UpstreamMaxBitRate   uint   `xml:"Body>GetInfoResponse>NewUpstreamMaxBitRate"`
+		DownstreamMaxBitRate uint   `xml:"Body>GetInfoResponse>NewDownstreamMaxBitRate"`
 	}{}
 	err := fb.invokeDeviceService(deviceInfo, service, "GetInfo", &info)
 	if err != nil {
