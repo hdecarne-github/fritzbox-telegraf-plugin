@@ -90,8 +90,6 @@ func (fb *FritzBox) SampleConfig() string {
   # get_dsl_info = true
   ## Enable debug output
   # debug = false
-  ## Used reduced polling interval (especially if all infos are fetched)
-  # interval = "60s"
 `
 }
 
@@ -147,19 +145,19 @@ func (fb *FritzBox) processServices(a telegraf.Accumulator, deviceInfo *deviceIn
 		}
 		if strings.HasPrefix(service.ServiceType, "urn:dslforum-org:service:WLANConfiguration:") {
 			if fb.GetWLANInfo {
-				a.AddError(fb.processWLANConfigurationService(a, deviceInfo, service))
+				a.AddError(fb.processWLANConfigurationService(a, deviceInfo, &service))
 			}
 		} else if strings.HasPrefix(service.ServiceType, "urn:dslforum-org:service:WANCommonInterfaceConfig:") {
 			if fb.GetWANInfo {
-				a.AddError(fb.processWANCommonInterfaceConfigService(a, deviceInfo, service))
+				a.AddError(fb.processWANCommonInterfaceConfigService(a, deviceInfo, &service))
 			}
 		} else if strings.HasPrefix(service.ServiceType, "urn:dslforum-org:service:WANDSLInterfaceConfig:") {
 			if fb.GetDSLInfo {
-				a.AddError(fb.processDSLInterfaceConfigService(a, deviceInfo, service))
+				a.AddError(fb.processDSLInterfaceConfigService(a, deviceInfo, &service))
 			}
 		} else if strings.HasPrefix(service.ServiceType, "urn:dslforum-org:service:WANPPPConnection:") {
 			if fb.GetPPPInfo {
-				a.AddError(fb.processPPPConnectionService(a, deviceInfo, service))
+				a.AddError(fb.processPPPConnectionService(a, deviceInfo, &service))
 			}
 		}
 
@@ -167,38 +165,53 @@ func (fb *FritzBox) processServices(a telegraf.Accumulator, deviceInfo *deviceIn
 	return nil
 }
 
-func (fb *FritzBox) processWLANConfigurationService(a telegraf.Accumulator, deviceInfo *deviceInfo, service tr64DescDeviceService) error {
+func (fb *FritzBox) processWLANConfigurationService(a telegraf.Accumulator, deviceInfo *deviceInfo, service *tr64DescDeviceService) error {
 	info := struct {
 		Status  string `xml:"Body>GetInfoResponse>NewStatus"`
 		Channel string `xml:"Body>GetInfoResponse>NewChannel"`
 		SSID    string `xml:"Body>GetInfoResponse>NewSSID"`
 	}{}
-	err := fb.invokeDeviceService(deviceInfo, &service, "GetInfo", &info)
+	err := fb.invokeDeviceService(deviceInfo, service, "GetInfo", &info)
 	if err != nil {
 		return err
 	}
-	statistics := struct {
-		TotalPacketsSent     int `xml:"Body>GetStatisticsResponse>NewTotalPacketsSent"`
-		TotalPacketsReceived int `xml:"Body>GetStatisticsResponse>NewTotalPacketsReceived"`
+	totalAssociations := struct {
+		TotalAssociations int `xml:"Body>GetTotalAssociationsResponse>NewTotalAssociations"`
 	}{}
-	err = fb.invokeDeviceService(deviceInfo, &service, "GetStatistics", &statistics)
+	err = fb.invokeDeviceService(deviceInfo, service, "GetTotalAssociations", &totalAssociations)
 	if err != nil {
 		return err
 	}
+	connectionInfo := struct {
+		SSID           string `xml:"Body>X_AVM-DE_GetWLANConnectionInfoResponse>NewSSID"`
+		Channel        string `xml:"Body>X_AVM-DE_GetWLANConnectionInfoResponse>NewChannel"`
+		SignalStrength int    `xml:"Body>X_AVM-DE_GetWLANConnectionInfoResponse>NewX_AVM-DE_SignalStrength"`
+		Speed          int    `xml:"Body>X_AVM-DE_GetWLANConnectionInfoResponse>NewX_AVM-DE_Speed"`
+		SpeedRX        int    `xml:"Body>X_AVM-DE_GetWLANConnectionInfoResponse>NewX_AVM-DE_SpeedRX"`
+		SpeedMax       int    `xml:"Body>X_AVM-DE_GetWLANConnectionInfoResponse>NewX_AVM-DE_SpeedMax"`
+		SpeedRXMax     int    `xml:"Body>X_AVM-DE_GetWLANConnectionInfoResponse>NewX_AVM-DE_SpeedRXMax"`
+	}{}
+	connectionInfoErr := fb.invokeDeviceService(deviceInfo, service, "X_AVM-DE_GetWLANConnectionInfo", &connectionInfo)
 	if info.Status == "Up" {
 		tags := make(map[string]string)
 		tags["fritz_device"] = deviceInfo.BaseUrl.Hostname()
 		tags["service"] = service.ShortServiceId()
 		tags["ssid"] = info.SSID + "@" + info.Channel
 		fields := make(map[string]interface{})
-		fields["total_pakets_sent"] = statistics.TotalPacketsSent
-		fields["total_pakets_received"] = statistics.TotalPacketsReceived
+		fields["total_associations"] = totalAssociations.TotalAssociations
+		if connectionInfoErr == nil && connectionInfo.SSID == info.SSID && connectionInfo.Channel == info.Channel {
+			fields["signal_strength"] = connectionInfo.SignalStrength
+			fields["speed"] = connectionInfo.Speed
+			fields["speed_rx"] = connectionInfo.SpeedRX
+			fields["speed_max"] = connectionInfo.SpeedMax
+			fields["speed_rx_max"] = connectionInfo.SpeedRXMax
+		}
 		a.AddCounter("fritzbox_wlan", fields, tags)
 	}
 	return nil
 }
 
-func (fb *FritzBox) processWANCommonInterfaceConfigService(a telegraf.Accumulator, deviceInfo *deviceInfo, service tr64DescDeviceService) error {
+func (fb *FritzBox) processWANCommonInterfaceConfigService(a telegraf.Accumulator, deviceInfo *deviceInfo, service *tr64DescDeviceService) error {
 	commonLinkProperties := struct {
 		Layer1UpstreamMaxBitRate   int    `xml:"Body>GetCommonLinkPropertiesResponse>NewLayer1UpstreamMaxBitRate"`
 		Layer1DownstreamMaxBitRate int    `xml:"Body>GetCommonLinkPropertiesResponse>NewLayer1DownstreamMaxBitRate"`
@@ -206,21 +219,21 @@ func (fb *FritzBox) processWANCommonInterfaceConfigService(a telegraf.Accumulato
 		UpstreamCurrentMaxSpeed    int    `xml:"Body>GetCommonLinkPropertiesResponse>NewX_AVM-DE_UpstreamCurrentMaxSpeed"`
 		DownstreamCurrentMaxSpeed  int    `xml:"Body>GetCommonLinkPropertiesResponse>NewX_AVM-DE_DownstreamCurrentMaxSpeed"`
 	}{}
-	err := fb.invokeDeviceService(deviceInfo, &service, "GetCommonLinkProperties", &commonLinkProperties)
+	err := fb.invokeDeviceService(deviceInfo, service, "GetCommonLinkProperties", &commonLinkProperties)
 	if err != nil {
 		return err
 	}
 	totalBytesSent := struct {
 		TotalBytesSent int `xml:"Body>GetTotalBytesSentResponse>NewTotalBytesSent"`
 	}{}
-	err = fb.invokeDeviceService(deviceInfo, &service, "GetTotalBytesSent", &totalBytesSent)
+	err = fb.invokeDeviceService(deviceInfo, service, "GetTotalBytesSent", &totalBytesSent)
 	if err != nil {
 		return err
 	}
 	totalBytesReceived := struct {
 		TotalBytesReceived int `xml:"Body>GetTotalBytesReceivedResponse>NewTotalBytesReceived"`
 	}{}
-	err = fb.invokeDeviceService(deviceInfo, &service, "GetTotalBytesReceived", &totalBytesReceived)
+	err = fb.invokeDeviceService(deviceInfo, service, "GetTotalBytesReceived", &totalBytesReceived)
 	if err != nil {
 		return err
 	}
@@ -240,7 +253,7 @@ func (fb *FritzBox) processWANCommonInterfaceConfigService(a telegraf.Accumulato
 	return nil
 }
 
-func (fb *FritzBox) processDSLInterfaceConfigService(a telegraf.Accumulator, deviceInfo *deviceInfo, service tr64DescDeviceService) error {
+func (fb *FritzBox) processDSLInterfaceConfigService(a telegraf.Accumulator, deviceInfo *deviceInfo, service *tr64DescDeviceService) error {
 	info := struct {
 		Status                string `xml:"Body>GetInfoResponse>NewStatus"`
 		UpstreamCurrRate      int    `xml:"Body>GetInfoResponse>NewUpstreamCurrRate"`
@@ -254,7 +267,7 @@ func (fb *FritzBox) processDSLInterfaceConfigService(a telegraf.Accumulator, dev
 		UpstreamPower         int    `xml:"Body>GetInfoResponse>NewUpstreamPower"`
 		DownstreamPower       int    `xml:"Body>GetInfoResponse>NewDownstreamPower"`
 	}{}
-	err := fb.invokeDeviceService(deviceInfo, &service, "GetInfo", &info)
+	err := fb.invokeDeviceService(deviceInfo, service, "GetInfo", &info)
 	if err != nil {
 		return err
 	}
@@ -275,7 +288,7 @@ func (fb *FritzBox) processDSLInterfaceConfigService(a telegraf.Accumulator, dev
 		CRCErrors           int `xml:"Body>GetStatisticsTotalResponse>NewCRCErrors"`
 		ATUCCRCErrors       int `xml:"Body>GetStatisticsTotalResponse>NewATUCCRCErrors"`
 	}{}
-	err = fb.invokeDeviceService(deviceInfo, &service, "GetStatisticsTotal", &statisticsTotal)
+	err = fb.invokeDeviceService(deviceInfo, service, "GetStatisticsTotal", &statisticsTotal)
 	if err != nil {
 		return err
 	}
@@ -314,14 +327,14 @@ func (fb *FritzBox) processDSLInterfaceConfigService(a telegraf.Accumulator, dev
 	return nil
 }
 
-func (fb *FritzBox) processPPPConnectionService(a telegraf.Accumulator, deviceInfo *deviceInfo, service tr64DescDeviceService) error {
+func (fb *FritzBox) processPPPConnectionService(a telegraf.Accumulator, deviceInfo *deviceInfo, service *tr64DescDeviceService) error {
 	info := struct {
 		ConnectionStatus     string `xml:"Body>GetInfoResponse>NewConnectionStatus"`
 		Uptime               int    `xml:"Body>GetInfoResponse>NewUptime"`
 		UpstreamMaxBitRate   int    `xml:"Body>GetInfoResponse>NewUpstreamMaxBitRate"`
 		DownstreamMaxBitRate int    `xml:"Body>GetInfoResponse>NewDownstreamMaxBitRate"`
 	}{}
-	err := fb.invokeDeviceService(deviceInfo, &service, "GetInfo", &info)
+	err := fb.invokeDeviceService(deviceInfo, service, "GetInfo", &info)
 	if err != nil {
 		return err
 	}
