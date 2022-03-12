@@ -218,20 +218,35 @@ func (fb *FritzBox) processWANCommonInterfaceConfigService(a telegraf.Accumulato
 	if err != nil {
 		return err
 	}
-	totalBytesSent := struct {
-		TotalBytesSent uint `xml:"Body>GetTotalBytesSentResponse>NewTotalBytesSent"`
+	// Use public IGD service instead of the found one, because IGD supports uint8 counters
+	igdWANCommonInterfaceConfigService := tr64DescDeviceService{
+		ServiceType: "urn:schemas-upnp-org:service:WANCommonInterfaceConfig:1",
+		ServiceId:   "urn:schemas-upnp-org:service:WANCommonInterfaceConfig:1",
+		ControlURL:  "/igdupnp/control/WANCommonIFC1"}
+	addonInfos := struct {
+		ByteSendRate         uint   `xml:"Body>GetAddonInfosResponse>NewByteSendRate"`
+		ByteReceiveRate      uint   `xml:"Body>GetAddonInfosResponse>NewByteReceiveRate"`
+		TotalBytesSent64     uint64 `xml:"Body>GetAddonInfosResponse>NewX_AVM_DE_TotalBytesSent64"`
+		TotalBytesReceived64 uint64 `xml:"Body>GetAddonInfosResponse>NewX_AVM_DE_TotalBytesReceived64"`
 	}{}
-	err = fb.invokeDeviceService(deviceInfo, service, "GetTotalBytesSent", &totalBytesSent)
+	err = fb.invokeDeviceService(deviceInfo, &igdWANCommonInterfaceConfigService, "GetAddonInfos", &addonInfos)
 	if err != nil {
 		return err
 	}
-	totalBytesReceived := struct {
-		TotalBytesReceived uint `xml:"Body>GetTotalBytesReceivedResponse>NewTotalBytesReceived"`
-	}{}
-	err = fb.invokeDeviceService(deviceInfo, service, "GetTotalBytesReceived", &totalBytesReceived)
-	if err != nil {
-		return err
-	}
+	//totalBytesSent := struct {
+	//	TotalBytesSent uint `xml:"Body>GetTotalBytesSentResponse>NewTotalBytesSent"`
+	//}{}
+	//err = fb.invokeDeviceService(deviceInfo, service, "GetTotalBytesSent", &totalBytesSent)
+	//if err != nil {
+	//	return err
+	//}
+	//totalBytesReceived := struct {
+	//	TotalBytesReceived uint `xml:"Body>GetTotalBytesReceivedResponse>NewTotalBytesReceived"`
+	//}{}
+	//err = fb.invokeDeviceService(deviceInfo, service, "GetTotalBytesReceived", &totalBytesReceived)
+	//if err != nil {
+	//	return err
+	//}
 	if commonLinkProperties.PhysicalLinkStatus == "Up" {
 		tags := make(map[string]string)
 		tags["fritz_device"] = deviceInfo.BaseUrl.Hostname()
@@ -241,8 +256,10 @@ func (fb *FritzBox) processWANCommonInterfaceConfigService(a telegraf.Accumulato
 		fields["layer1_downstream_max_bit_rate"] = commonLinkProperties.Layer1DownstreamMaxBitRate
 		fields["upstream_current_max_speed"] = commonLinkProperties.UpstreamCurrentMaxSpeed
 		fields["downstream_current_max_speed"] = commonLinkProperties.DownstreamCurrentMaxSpeed
-		fields["total_bytes_sent"] = totalBytesSent.TotalBytesSent
-		fields["total_bytes_received"] = totalBytesReceived.TotalBytesReceived
+		//	fields["byte_send_rate"] = addonInfos.ByteSendRate
+		//	fields["byte_receive_rate"] = addonInfos.ByteReceiveRate
+		fields["total_bytes_sent"] = addonInfos.TotalBytesSent64
+		fields["total_bytes_received"] = addonInfos.TotalBytesReceived64
 		a.AddCounter("fritzbox_wan", fields, tags)
 	}
 	return nil
