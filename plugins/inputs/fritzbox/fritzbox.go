@@ -182,16 +182,6 @@ func (fb *FritzBox) processWLANConfigurationService(a telegraf.Accumulator, devi
 	if err != nil {
 		return err
 	}
-	connectionInfo := struct {
-		SSID           string `xml:"Body>X_AVM-DE_GetWLANConnectionInfoResponse>NewSSID"`
-		Channel        string `xml:"Body>X_AVM-DE_GetWLANConnectionInfoResponse>NewChannel"`
-		SignalStrength int    `xml:"Body>X_AVM-DE_GetWLANConnectionInfoResponse>NewX_AVM-DE_SignalStrength"`
-		Speed          int    `xml:"Body>X_AVM-DE_GetWLANConnectionInfoResponse>NewX_AVM-DE_Speed"`
-		SpeedRX        int    `xml:"Body>X_AVM-DE_GetWLANConnectionInfoResponse>NewX_AVM-DE_SpeedRX"`
-		SpeedMax       int    `xml:"Body>X_AVM-DE_GetWLANConnectionInfoResponse>NewX_AVM-DE_SpeedMax"`
-		SpeedRXMax     int    `xml:"Body>X_AVM-DE_GetWLANConnectionInfoResponse>NewX_AVM-DE_SpeedRXMax"`
-	}{}
-	connectionInfoErr := fb.invokeDeviceService(deviceInfo, service, "X_AVM-DE_GetWLANConnectionInfo", &connectionInfo)
 	if info.Status == "Up" {
 		tags := make(map[string]string)
 		tags["fritz_device"] = deviceInfo.BaseUrl.Hostname()
@@ -199,19 +189,6 @@ func (fb *FritzBox) processWLANConfigurationService(a telegraf.Accumulator, devi
 		tags["access_point"] = deviceInfo.BaseUrl.Hostname() + ":" + info.SSID + ":" + info.Channel
 		fields := make(map[string]interface{})
 		fields["total_associations"] = totalAssociations.TotalAssociations
-		if connectionInfoErr == nil && connectionInfo.SSID == info.SSID && connectionInfo.Channel == info.Channel {
-			fields["bridge_signal_strength"] = connectionInfo.SignalStrength
-			fields["bridge_speed"] = connectionInfo.Speed
-			fields["bridge_speed_rx"] = connectionInfo.SpeedRX
-			fields["bridge_speed_max"] = connectionInfo.SpeedMax
-			fields["bridge_speed_rx_max"] = connectionInfo.SpeedRXMax
-		} else {
-			fields["bridge_signal_strength"] = 0
-			fields["bridge_speed"] = 0
-			fields["bridge_speed_rx"] = 0
-			fields["bridge_speed_max"] = 0
-			fields["bridge_speed_rx_max"] = 0
-		}
 		a.AddCounter("fritzbox_wlan", fields, tags)
 	}
 	return nil
