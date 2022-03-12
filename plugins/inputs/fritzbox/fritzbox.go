@@ -200,11 +200,17 @@ func (fb *FritzBox) processWLANConfigurationService(a telegraf.Accumulator, devi
 		fields := make(map[string]interface{})
 		fields["total_associations"] = totalAssociations.TotalAssociations
 		if connectionInfoErr == nil && connectionInfo.SSID == info.SSID && connectionInfo.Channel == info.Channel {
-			fields["ci_signal_strength"] = connectionInfo.SignalStrength
-			fields["ci_speed"] = connectionInfo.Speed
-			fields["ci_speed_rx"] = connectionInfo.SpeedRX
-			fields["ci_speed_max"] = connectionInfo.SpeedMax
-			fields["ci_speed_rx_max"] = connectionInfo.SpeedRXMax
+			fields["bridge_signal_strength"] = connectionInfo.SignalStrength
+			fields["bridge_speed"] = connectionInfo.Speed
+			fields["bridge_speed_rx"] = connectionInfo.SpeedRX
+			fields["bridge_speed_max"] = connectionInfo.SpeedMax
+			fields["bridge_speed_rx_max"] = connectionInfo.SpeedRXMax
+		} else {
+			fields["bridge_signal_strength"] = 0
+			fields["bridge_speed"] = 0
+			fields["bridge_speed_rx"] = 0
+			fields["bridge_speed_max"] = 0
+			fields["bridge_speed_rx_max"] = 0
 		}
 		a.AddCounter("fritzbox_wlan", fields, tags)
 	}
