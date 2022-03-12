@@ -50,26 +50,29 @@ func (s *tr64DescDeviceService) ShortServiceId() string {
 }
 
 type FritzBox struct {
-	Devices     [][]string `toml:"devices"`
-	Timeout     int        `toml:"timeout"`
-	GetWLANInfo bool       `toml:"get_wlan_info"`
-	GetWANInfo  bool       `toml:"get_wan_info"`
-	GetDSLInfo  bool       `toml:"get_dsl_info"`
-	GetPPPInfo  bool       `toml:"get_ppp_info"`
-	Debug       bool       `toml:"debug"`
+	Devices        [][]string `toml:"devices"`
+	Timeout        int        `toml:"timeout"`
+	GetWLANInfo    bool       `toml:"get_wlan_info"`
+	GetWANInfo     bool       `toml:"get_wan_info"`
+	GetDSLInfo     bool       `toml:"get_dsl_info"`
+	GetPPPInfo     bool       `toml:"get_ppp_info"`
+	FullQueryCycle int        `toml:"full_query_cycle"`
+	Debug          bool       `toml:"debug"`
 
 	deviceInfos  map[string]*deviceInfo
 	cachedClient *http.Client
+	queryCounter int
 }
 
 func NewFritzBox() *FritzBox {
 	return &FritzBox{
-		Devices:     [][]string{{"fritz.box", "", ""}},
-		Timeout:     5,
-		GetWLANInfo: true,
-		GetWANInfo:  true,
-		GetDSLInfo:  true,
-		GetPPPInfo:  true,
+		Devices:        [][]string{{"fritz.box", "", ""}},
+		Timeout:        5,
+		GetWLANInfo:    true,
+		GetWANInfo:     true,
+		GetDSLInfo:     true,
+		GetPPPInfo:     true,
+		FullQueryCycle: 6,
 
 		deviceInfos: make(map[string]*deviceInfo)}
 }
@@ -88,6 +91,8 @@ func (fb *FritzBox) SampleConfig() string {
   # get_dsl_info = true
   ## Process PPP services (if found)
   # get_dsl_info = true
+  ## The cycle count, at which low-traffic stats are queried
+  # full_query_cycle = 6
   ## Enable debug output
   # debug = false
 `
@@ -114,6 +119,12 @@ func (fb *FritzBox) Gather(a telegraf.Accumulator) error {
 		} else {
 			a.AddError(err)
 		}
+	}
+	fb.queryCounter++
+	if 1 < fb.FullQueryCycle {
+		fb.queryCounter %= fb.FullQueryCycle
+	} else {
+		fb.queryCounter %= 1
 	}
 	return nil
 }
@@ -143,8 +154,9 @@ func (fb *FritzBox) processServices(a telegraf.Accumulator, deviceInfo *deviceIn
 		if fb.Debug {
 			log.Printf("Considering service type: %s", service.ServiceType)
 		}
+		fullQuery := fb.queryCounter == 0
 		if strings.HasPrefix(service.ServiceType, "urn:dslforum-org:service:WLANConfiguration:") {
-			if fb.GetWLANInfo {
+			if fb.GetWLANInfo && fullQuery {
 				a.AddError(fb.processWLANConfigurationService(a, deviceInfo, &service))
 			}
 		} else if strings.HasPrefix(service.ServiceType, "urn:dslforum-org:service:WANCommonInterfaceConfig:") {
@@ -152,11 +164,11 @@ func (fb *FritzBox) processServices(a telegraf.Accumulator, deviceInfo *deviceIn
 				a.AddError(fb.processWANCommonInterfaceConfigService(a, deviceInfo, &service))
 			}
 		} else if strings.HasPrefix(service.ServiceType, "urn:dslforum-org:service:WANDSLInterfaceConfig:") {
-			if fb.GetDSLInfo {
+			if fb.GetDSLInfo && fullQuery {
 				a.AddError(fb.processDSLInterfaceConfigService(a, deviceInfo, &service))
 			}
 		} else if strings.HasPrefix(service.ServiceType, "urn:dslforum-org:service:WANPPPConnection:") {
-			if fb.GetPPPInfo {
+			if fb.GetPPPInfo && fullQuery {
 				a.AddError(fb.processPPPConnectionService(a, deviceInfo, &service))
 			}
 		}
