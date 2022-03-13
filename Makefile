@@ -28,3 +28,9 @@ test:
 tidy:
 	go mod verify
 	go mod tidy
+
+.PHONY: clean
+clean:
+	rm -rf .bin
+	rm -rf .go
+	rm -f *.out
