@@ -31,40 +31,43 @@ func TestDescription(t *testing.T) {
 }
 
 func TestGather1(t *testing.T) {
-	testServer := httptest.NewServer(&testServerHandler{})
+	testServerHandler := &testServerHandler{Debug: true}
+	testServer := httptest.NewServer(testServerHandler)
 	defer testServer.Close()
 	fb := NewFritzBox()
-	fb.GetWLANInfo = false
-	fb.GetWANInfo = false
-	fb.GetDSLInfo = false
-	fb.GetPPPInfo = false
-	fb.Devices = [][]string{{testServer.URL, "", ""}}
+	fb.Devices = [][]string{{testServer.URL, "user", "secret"}}
+	fb.Debug = testServerHandler.Debug
 	var a testutil.Accumulator
 	require.NoError(t, a.GatherError(fb.Gather))
 }
 
 type testServerHandler struct {
+	Debug bool
 }
 
 func (tsh *testServerHandler) ServeHTTP(out http.ResponseWriter, request *http.Request) {
 	requestURL := request.URL.String()
-	log.Printf("test: request URL: %s", requestURL)
+	if tsh.Debug {
+		log.Printf("test: request URL: %s", requestURL)
+	}
 	if requestURL == "/tr64desc.xml" {
 		tsh.serveTr64descXML(out)
 	} else if requestURL == "/upnp/control/deviceinfo" {
 		tsh.serveDeviceInfo(out, request)
 	} else if requestURL == "/upnp/control/wlanconfig1" {
-
+		tsh.serveWLANConfig1(out, request)
 	} else if requestURL == "/upnp/control/wlanconfig2" {
-
+		tsh.serveWLANConfig2(out, request)
 	} else if requestURL == "/upnp/control/wlanconfig3" {
-
+		tsh.serveWLANConfig3(out, request)
 	} else if requestURL == "/upnp/control/wancommonifconfig1" {
-
+		tsh.serveWANCommonIfConfig1(out, request)
+	} else if requestURL == "/igdupnp/control/WANCommonIFC1" {
+		tsh.serveWANCommonIFC1(out, request)
 	} else if requestURL == "/upnp/control/wandslifconfig1" {
-
+		tsh.serveWANDSLIfConfig1(out, request)
 	} else if requestURL == "/upnp/control/wanpppconn1" {
-
+		tsh.serveWANPPPConn1(out, request)
 	}
 }
 
@@ -372,10 +375,231 @@ func (tsh *testServerHandler) serveDeviceInfo(out http.ResponseWriter, request *
 	}
 }
 
+const testWLANConfig1GetInfoResponse = `
+<?xml version="1.0"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<s:Body>
+<u:GetInfoResponse xmlns:u="urn:dslforum-org:service:WLANConfiguration:3">
+<NewStatus>Disabled</NewStatus>
+<NewChannel>1</NewChannel>
+<NewSSID>TestSSID1</NewSSID>
+</u:GetInfoResponse>
+</s:Body>
+</s:Envelope>
+`
+
+const testWLANConfig1GetAssociationsResponse = `
+<?xml version="1.0"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<s:Body>
+<u:GetTotalAssociationsResponse xmlns:u="urn:dslforum-org:service:WLANConfiguration:3">
+<NewTotalAssociations>0</NewTotalAssociations>
+</u:GetTotalAssociationsResponse>
+</s:Body>
+</s:Envelope>
+`
+
+func (tsh *testServerHandler) serveWLANConfig1(out http.ResponseWriter, request *http.Request) {
+	action := tsh.getSoapAction(request, "urn:WLANConfiguration-com:serviceId:WLANConfiguration1")
+	if action == "GetInfo" {
+		tsh.writeXML(out, testWLANConfig1GetInfoResponse)
+	} else if action == "GetTotalAssociations" {
+		tsh.writeXML(out, testWLANConfig1GetAssociationsResponse)
+	}
+}
+
+const testWLANConfig2GetInfoResponse = `
+<?xml version="1.0"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<s:Body>
+<u:GetInfoResponse xmlns:u="urn:dslforum-org:service:WLANConfiguration:3">
+<NewStatus>Up</NewStatus>
+<NewChannel>2</NewChannel>
+<NewSSID>TestSSID2</NewSSID>
+</u:GetInfoResponse>
+</s:Body>
+</s:Envelope>
+`
+
+const testWLANConfig2GetAssociationsResponse = `
+<?xml version="1.0"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<s:Body>
+<u:GetTotalAssociationsResponse xmlns:u="urn:dslforum-org:service:WLANConfiguration:3">
+<NewTotalAssociations>20</NewTotalAssociations>
+</u:GetTotalAssociationsResponse>
+</s:Body>
+</s:Envelope>
+`
+
+func (tsh *testServerHandler) serveWLANConfig2(out http.ResponseWriter, request *http.Request) {
+	action := tsh.getSoapAction(request, "urn:WLANConfiguration-com:serviceId:WLANConfiguration2")
+	if action == "GetInfo" {
+		tsh.writeXML(out, testWLANConfig2GetInfoResponse)
+	} else if action == "GetTotalAssociations" {
+		tsh.writeXML(out, testWLANConfig2GetAssociationsResponse)
+	}
+}
+
+const testWLANConfig3GetInfoResponse = `
+<?xml version="1.0"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<s:Body>
+<u:GetInfoResponse xmlns:u="urn:dslforum-org:service:WLANConfiguration:3">
+<NewStatus>Up</NewStatus>
+<NewChannel>3</NewChannel>
+<NewSSID>TestSSID3</NewSSID>
+</u:GetInfoResponse>
+</s:Body>
+</s:Envelope>
+`
+
+const testWLANConfig3GetAssociationsResponse = `
+<?xml version="1.0"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<s:Body>
+<u:GetTotalAssociationsResponse xmlns:u="urn:dslforum-org:service:WLANConfiguration:3">
+<NewTotalAssociations>30</NewTotalAssociations>
+</u:GetTotalAssociationsResponse>
+</s:Body>
+</s:Envelope>
+`
+
+func (tsh *testServerHandler) serveWLANConfig3(out http.ResponseWriter, request *http.Request) {
+	action := tsh.getSoapAction(request, "urn:WLANConfiguration-com:serviceId:WLANConfiguration3")
+	if action == "GetInfo" {
+		tsh.writeXML(out, testWLANConfig3GetInfoResponse)
+	} else if action == "GetTotalAssociations" {
+		tsh.writeXML(out, testWLANConfig3GetAssociationsResponse)
+	}
+}
+
+const testWANCommonIfConfig1GetCommonLinkPropertiesResponse = `
+<?xml version="1.0"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<s:Body>
+<u:GetCommonLinkPropertiesResponse xmlns:u="urn:dslforum-org:service:WANCommonInterfaceConfig:1">
+<NewLayer1UpstreamMaxBitRate>49741000</NewLayer1UpstreamMaxBitRate>
+<NewLayer1DownstreamMaxBitRate>240893000</NewLayer1DownstreamMaxBitRate>
+<NewPhysicalLinkStatus>Up</NewPhysicalLinkStatus>
+<NewX_AVM-DE_DownstreamCurrentMaxSpeed>1711517</NewX_AVM-DE_DownstreamCurrentMaxSpeed>
+<NewX_AVM-DE_UpstreamCurrentMaxSpeed>53711</NewX_AVM-DE_UpstreamCurrentMaxSpeed>
+</u:GetCommonLinkPropertiesResponse>
+</s:Body>
+</s:Envelope>
+`
+
+func (tsh *testServerHandler) serveWANCommonIfConfig1(out http.ResponseWriter, request *http.Request) {
+	action := tsh.getSoapAction(request, "urn:WANCIfConfig-com:serviceId:WANCommonInterfaceConfig1")
+	if action == "GetCommonLinkProperties" {
+		tsh.writeXML(out, testWANCommonIfConfig1GetCommonLinkPropertiesResponse)
+	}
+}
+
+const testWANCommonIFC1GetAddonInfosResponse = `
+<?xml version="1.0" encoding="utf-8"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<s:Body>
+<u:GetAddonInfosResponse xmlns:u="urn:schemas-upnp-org:service:WANCommonInterfaceConfig:1">
+<NewByteSendRate>79128</NewByteSendRate>
+<NewByteReceiveRate>1148054</NewByteReceiveRate>
+<NewTotalBytesSent>615295140</NewTotalBytesSent>
+<NewTotalBytesReceived>217715745</NewTotalBytesReceived>
+<NewX_AVM_DE_TotalBytesSent64>30680066212</NewX_AVM_DE_TotalBytesSent64>
+<NewX_AVM_DE_TotalBytesReceived64>197786211361</NewX_AVM_DE_TotalBytesReceived64>
+</u:GetAddonInfosResponse>
+</s:Body>
+</s:Envelope>
+`
+
+func (tsh *testServerHandler) serveWANCommonIFC1(out http.ResponseWriter, request *http.Request) {
+	action := tsh.getSoapAction(request, "urn:schemas-upnp-org:service:WANCommonInterfaceConfig:1")
+	if action == "GetAddonInfos" {
+		tsh.writeXML(out, testWANCommonIFC1GetAddonInfosResponse)
+	}
+}
+
+const testWANDSLIfConfig1GetInfoResponse = `
+<?xml version="1.0"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<s:Body>
+<u:GetInfoResponse xmlns:u="urn:dslforum-org:service:WANDSLInterfaceConfig:1">
+<NewStatus>Up</NewStatus>
+<NewUpstreamCurrRate>46719</NewUpstreamCurrRate>
+<NewDownstreamCurrRate>236716</NewDownstreamCurrRate>
+<NewUpstreamMaxRate>49741</NewUpstreamMaxRate>
+<NewDownstreamMaxRate>240893</NewDownstreamMaxRate>
+<NewUpstreamNoiseMargin>80</NewUpstreamNoiseMargin>
+<NewDownstreamNoiseMargin>110</NewDownstreamNoiseMargin>
+<NewUpstreamAttenuation>80</NewUpstreamAttenuation>
+<NewDownstreamAttenuation>140</NewDownstreamAttenuation>
+<NewUpstreamPower>498</NewUpstreamPower>
+<NewDownstreamPower>515</NewDownstreamPower>
+</u:GetInfoResponse>
+</s:Body>
+</s:Envelope>
+`
+
+const testWANDSLIfConfig1GetStatisticsTotalResponse = `
+<?xml version="1.0"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<s:Body>
+<u:GetStatisticsTotalResponse xmlns:u="urn:dslforum-org:service:WANDSLInterfaceConfig:1">
+<NewCellDelin>0</NewCellDelin>
+<NewLinkRetrain>1</NewLinkRetrain>
+<NewInitErrors>0</NewInitErrors>
+<NewInitTimeouts>0</NewInitTimeouts>
+<NewLossOfFraming>0</NewLossOfFraming>
+<NewErroredSecs>4</NewErroredSecs>
+<NewSeverelyErroredSecs>0</NewSeverelyErroredSecs>
+<NewFECErrors>0</NewFECErrors>
+<NewATUCFECErrors>0</NewATUCFECErrors>
+<NewHECErrors>0</NewHECErrors>
+<NewATUCHECErrors>0</NewATUCHECErrors>
+<NewCRCErrors>6</NewCRCErrors>
+<NewATUCCRCErrors>1</NewATUCCRCErrors>
+</u:GetStatisticsTotalResponse>
+</s:Body>
+</s:Envelope>
+`
+
+func (tsh *testServerHandler) serveWANDSLIfConfig1(out http.ResponseWriter, request *http.Request) {
+	action := tsh.getSoapAction(request, "urn:WANDSLIfConfig-com:serviceId:WANDSLInterfaceConfig1")
+	if action == "GetInfo" {
+		tsh.writeXML(out, testWANDSLIfConfig1GetInfoResponse)
+	} else if action == "GetStatisticsTotal" {
+		tsh.writeXML(out, testWANDSLIfConfig1GetStatisticsTotalResponse)
+	}
+}
+
+const testWANPPPConn1GetInfoResponse = `
+<?xml version="1.0"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<s:Body>
+<u:GetInfoResponse xmlns:u="urn:dslforum-org:service:WANPPPConnection:1">
+<NewConnectionStatus>Connected</NewConnectionStatus>
+<NewUptime>755581</NewUptime>
+<NewUpstreamMaxBitRate>45048452</NewUpstreamMaxBitRate>
+<NewDownstreamMaxBitRate>56093007</NewDownstreamMaxBitRate>
+</u:GetInfoResponse>
+</s:Body>
+</s:Envelope>
+`
+
+func (tsh *testServerHandler) serveWANPPPConn1(out http.ResponseWriter, request *http.Request) {
+	action := tsh.getSoapAction(request, "urn:WANPPPConnection-com:serviceId:WANPPPConnection1")
+	if action == "GetInfo" {
+		tsh.writeXML(out, testWANPPPConn1GetInfoResponse)
+	}
+}
+
 func (tsh *testServerHandler) getSoapAction(request *http.Request, uri string) string {
 	matcher := regexp.MustCompile(fmt.Sprintf(`(?s)<u:(.*) xmlns:u="%s" />`, uri))
 	defer request.Body.Close()
 	body, _ := io.ReadAll(request.Body)
+	if tsh.Debug {
+		log.Printf("Request body:\n%s", body)
+	}
 	match := matcher.FindStringSubmatch(string(body))
 	if len(match) != 2 {
 		return ""
