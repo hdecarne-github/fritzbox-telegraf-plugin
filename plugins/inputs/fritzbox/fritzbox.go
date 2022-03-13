@@ -82,11 +82,11 @@ func NewFritzBox() *FritzBox {
 func (fb *FritzBox) SampleConfig() string {
 	return `
   ## The fritz devices to query (multiple triples of base url, login, password)
-  # devices = [["http://fritz.box:49000", "", ""]]
+  devices = [["http://fritz.box:49000", "", ""]]
   ## The http timeout to use (in seconds)
   # timeout = 5
   ## Process Device services (if found)
-  # get_wlan_info = true
+  # get_device_info = true
   ## Process WLAN services (if found)
   # get_wlan_info = true
   ## Process WAN services (if found)
@@ -94,7 +94,7 @@ func (fb *FritzBox) SampleConfig() string {
   ## Process DSL services (if found)
   # get_dsl_info = true
   ## Process PPP services (if found)
-  # get_dsl_info = true
+  # get_ppp_info = true
   ## The cycle count, at which low-traffic stats are queried
   # full_query_cycle = 6
   ## Enable debug output
