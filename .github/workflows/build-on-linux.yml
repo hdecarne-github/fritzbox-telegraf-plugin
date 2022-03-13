@@ -17,3 +17,5 @@ jobs:
           check-latest: true
       - name: Run Build
         run: make
+      - name: Run SonarQube
+        uses: sonarsource/sonarcloud-github-action@master
