@@ -52,6 +52,7 @@ func (s *tr64DescDeviceService) ShortServiceId() string {
 type FritzBox struct {
 	Devices        [][]string `toml:"devices"`
 	Timeout        int        `toml:"timeout"`
+	GetDeviceInfo  bool       `toml:"get_device_info"`
 	GetWLANInfo    bool       `toml:"get_wlan_info"`
 	GetWANInfo     bool       `toml:"get_wan_info"`
 	GetDSLInfo     bool       `toml:"get_dsl_info"`
@@ -68,6 +69,7 @@ func NewFritzBox() *FritzBox {
 	return &FritzBox{
 		Devices:        [][]string{{"fritz.box", "", ""}},
 		Timeout:        5,
+		GetDeviceInfo:  true,
 		GetWLANInfo:    true,
 		GetWANInfo:     true,
 		GetDSLInfo:     true,
@@ -83,6 +85,8 @@ func (fb *FritzBox) SampleConfig() string {
   # devices = [["http://fritz.box:49000", "", ""]]
   ## The http timeout to use (in seconds)
   # timeout = 5
+  ## Process Device services (if found)
+  # get_wlan_info = true
   ## Process WLAN services (if found)
   # get_wlan_info = true
   ## Process WAN services (if found)
@@ -155,7 +159,11 @@ func (fb *FritzBox) processServices(a telegraf.Accumulator, deviceInfo *deviceIn
 			log.Printf("Considering service type: %s", service.ServiceType)
 		}
 		fullQuery := fb.queryCounter == 0
-		if strings.HasPrefix(service.ServiceType, "urn:dslforum-org:service:WLANConfiguration:") {
+		if strings.HasPrefix(service.ServiceType, "urn:dslforum-org:service:DeviceInfo:") {
+			if fb.GetDeviceInfo && fullQuery {
+				a.AddError(fb.processDeviceInfoService(a, deviceInfo, &service))
+			}
+		} else if strings.HasPrefix(service.ServiceType, "urn:dslforum-org:service:WLANConfiguration:") {
 			if fb.GetWLANInfo && fullQuery {
 				a.AddError(fb.processWLANConfigurationService(a, deviceInfo, &service))
 			}
@@ -174,6 +182,25 @@ func (fb *FritzBox) processServices(a telegraf.Accumulator, deviceInfo *deviceIn
 		}
 
 	}
+	return nil
+}
+
+func (fb *FritzBox) processDeviceInfoService(a telegraf.Accumulator, deviceInfo *deviceInfo, service *tr64DescDeviceService) error {
+	info := struct {
+		UpTime    uint   `xml:"Body>GetInfoResponse>NewUpTime"`
+		ModelName string `xml:"Body>GetInfoResponse>NewModelName"`
+	}{}
+	err := fb.invokeDeviceService(deviceInfo, service, "GetInfo", &info)
+	if err != nil {
+		return err
+	}
+	tags := make(map[string]string)
+	tags["fritz_device"] = deviceInfo.BaseUrl.Hostname()
+	tags["service"] = service.ShortServiceId()
+	fields := make(map[string]interface{})
+	fields["uptime"] = info.UpTime
+	fields["model_name"] = info.ModelName
+	a.AddCounter("fritzbox_device", fields, tags)
 	return nil
 }
 
