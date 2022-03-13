@@ -50,6 +50,10 @@ func (tsh *testServerHandler) ServeHTTP(out http.ResponseWriter, request *http.R
 	if tsh.Debug {
 		log.Printf("test: request URL: %s", requestURL)
 	}
+	if request.Method == http.MethodPost && request.Header.Get("Authorization") == "" {
+		out.Header().Add("Www-Authenticate", `Digest realm="HTTPS Access",nonce="30492F0B4025DFF7",algorithm=MD5,qop="auth"`)
+		out.WriteHeader(http.StatusUnauthorized)
+	}
 	if requestURL == "/tr64desc.xml" {
 		tsh.serveTr64descXML(out)
 	} else if requestURL == "/upnp/control/deviceinfo" {
