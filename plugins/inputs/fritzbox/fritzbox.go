@@ -397,8 +397,8 @@ func (fb *FritzBox) invokeDeviceService(deviceInfo *deviceInfo, service *tr64Des
 	}
 	endpoint := deviceInfo.BaseUrl.ResolveReference(controlUrl).String()
 	soapAction := fmt.Sprintf("%s#%s", service.ServiceType, action)
-	requestBody := fmt.Sprintf(`
-		<?xml version="1.0" encoding="utf-8" ?>
+	requestBody := fmt.Sprintf(
+		`<?xml version="1.0" encoding="utf-8" ?>
 		<s:Envelope s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
 			<s:Body>
 				<u:%s xmlns:u="%s" />

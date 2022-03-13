@@ -1,6 +1,7 @@
 version :=  $(shell cat version.txt)
 plugin_name := fritzbox-telegraf-plugin
 
+MAKEFLAGS += --no-print-directory
 GOOS ?= $(shell go env GOOS)
 GOARCH ?= $(shell go env GOARCH)
 
@@ -13,11 +14,15 @@ all:
 
 .PHONY: deps
 deps:
-	go mod download
+	go mod download -x
 
 .PHONY: $(plugin_name)
 $(plugin_name):
 	go build -ldflags "$(LDFLAGS)" -o .bin/$(plugin_name) ./cmd/$(plugin_name)
+
+.PHONY: test
+test:
+	go test -covermode=atomic -coverprofile=coverage.out ./...
 
 .PHONY: tidy
 tidy:
