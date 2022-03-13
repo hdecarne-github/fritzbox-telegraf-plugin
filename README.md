@@ -46,17 +46,19 @@ To enable the plugin within your Telegraf instance, add the following section to
   command = ["/usr/local/lib/telegraf/fritzbox-telegraf-plugin", "-config", "/etc/telegraf/fritzbox.conf", "-poll_interval", "10s"]
   signal = "none"
 ```
-The polling interval defined here interacts with the **full_query_cycle** option above. The plugin gathers it's stats every 10s. Every 6th run (60s) it performs all configured queries. In between only the WAN status are queried. By adapting the two options **poll_interval** and **full_query_cycle** you control the update frequency as well as the resulting system load.
+The polling interval defined here interacts with the **full_query_cycle** option above. The plugin gathers it's stats every 10s. Every 6th run (60s) it performs all configured queries. In between only the WAN stats are queried. By adapting the two options **poll_interval** and **full_query_cycle** you control the update frequency as well as the resulting system load.
 
 #### Device Info (get_device_info)
+Reports the **fritzbox_device** measurement:
 ```
 fritzbox_device,fritz_device=fritz.box,service=DeviceInfo1 uptime=773607i,model_name="FRITZ!Box 7590" 1647203021364800000
 ```
-The uptime (in seconds) as well as the model name are queried for every queried device.
+The uptime (in seconds) as well as the model name are queried for every configured device.
 
 ![Device Info](docs/screen_device.png)
 
 #### WLAN Info (get_wlan_info)
+Reports the **fritzbox_wlan** measurement:
 ```
 fritzbox_wlan,access_point=fritz.box:MySSID:11,fritz_device=fritz.box,service=WLANConfiguration1 total_associations=2i 1647203147521085000
 fritzbox_wlan,access_point=fritz.box:MySSID:44,fritz_device=fritz.box,service=WLANConfiguration2 total_associations=7i 1647203148048754000
@@ -66,14 +68,16 @@ For every device and every configured WLAN (2.4 GHz and 5 GHz are considered sep
 ![WLAN Info](docs/screen_wlan.png)
 
 #### WAN Info (get_wan_info)
+Reports the **fritzbox_wan** measurement:
 ```
 fritzbox_wan,fritz_device=fritz.box,service=WANCommonInterfaceConfig1 layer1_downstream_max_bit_rate=240893000i,upstream_current_max_speed=6255i,downstream_current_max_speed=8027i,total_bytes_sent=31387049656i,total_bytes_received=214361402812i,layer1_upstream_max_bit_rate=49741000i 1647203434928636000
 ```
-The current stats for the WAN link are reported (bandwidth, current rates, total transfered bytes, ...).
+The current stats of the WAN link are reported (bandwidth, current rates, transfered bytes, ...).
 
 ![WAN Info](docs/screen_wan.png)
 
 #### DSL Info (get_dsl_info)
+Reports the **fritzbox_dsl** measurement:
 ```
 fritzbox_dsl,fritz_device=fritz.box,service=WANDSLInterfaceConfig1 downstream_power=515i,receive_blocks=181681151i,cell_delin=0i,errored_secs=4i,atuc_hec_errors=0i,upstream_max_rate=49741i,downstream_attenuation=140i,link_retrain=1i,crc_errors=6i,downstream_max_rate=240893i,downstream_noise_margin=110i,transmit_blocks=78704877i,init_errors=0i,loss_of_framing=0i,severly_errored_secs=0i,fec_errors=0i,hec_errors=0i,downstream_curr_rate=236716i,upstream_attenuation=80i,upstream_power=498i,init_timeouts=0i,atuc_fec_errors=0i,atuc_crc_errors=1i,upstream_curr_rate=46719i,upstream_noise_margin=80i 1647203965519168000
 ```
@@ -82,6 +86,7 @@ The current statistics of the DSL line are reported.
 ![DSL Info](docs/screen_dsl.png)
 
 #### PPP Info (get_ppp_info)
+Reports the **fritzbox_ppp** measurement:
 ```
 fritzbox_ppp,fritz_device=fritz.box,service=WANPPPConnection1 upstream_max_bit_rate=45048452i,downstream_max_bit_rate=56093007i,uptime=774164i 1647204091697400000
 ```
