@@ -41,7 +41,7 @@ The most important setting is the **devices** line. It defines the base URLs of 
 The flags (**get_*_info**) control which stats are polled and are described in the sections below.
 
 To enable the plugin within your Telegraf instance, add the following section to your **telegraf.conf**
-```
+```toml
 [[inputs.execd]]
   command = ["/usr/local/lib/telegraf/fritzbox-telegraf-plugin", "-config", "/etc/telegraf/fritzbox.conf", "-poll_interval", "10s"]
   signal = "none"
@@ -53,7 +53,7 @@ Reports the **fritzbox_device** measurement:
 ```
 fritzbox_device,fritz_device=fritz.box,service=DeviceInfo1 uptime=773607i,model_name="FRITZ!Box 7590" 1647203021364800000
 ```
-The uptime (in seconds) as well as the model name are queried for every configured device.
+The uptime (in seconds) as well as the model name are reported for every configured device.
 
 ![Device Info](docs/screen_device.png)
 
