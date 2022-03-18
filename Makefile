@@ -27,7 +27,9 @@ $(plugin_name):
 dist: $(plugin_name)
 	mkdir -p .build/dist
 	tar czvf .build/dist/$(plugin_name)-$(GOOS)-$(GOARCH)-$(version).tar.gz -C .build/bin .
+ifneq (, $(shell which zip))
 	zip -j .build/dist/$(plugin_name)-$(GOOS)-$(GOARCH)-$(version).zip .build/bin/*
+endif
 
 .PHONY: test
 test:

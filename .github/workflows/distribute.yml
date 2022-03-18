@@ -30,3 +30,9 @@ jobs:
             ${{ runner.os }}-go-
       - name: Run Build
         run: make all test
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: dist
+          path: ./build/dist
+          retention-days: 7
