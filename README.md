@@ -10,7 +10,7 @@ To install the plugin you have to download the release archive and extract it or
 ```
 make
 ```
-Go version 1.16 or higher is required to build the plugin. The resulting plugin binary will be written to **./bin**. Copy the plugin binary to a location of your choice (e.g. /usr/local/lib/telegraf/)
+Go version 1.16 or higher is required to build the plugin. The resulting plugin binary will be written to **./build/bin**. Copy the plugin binary to a location of your choice (e.g. /usr/local/lib/telegraf/)
 
 ### Configuration
 This is an [external plugin](https://github.com/influxdata/telegraf/blob/master/docs/EXTERNAL_PLUGINS.md) which has to be integrated via Telegraf's [excecd plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/execd).

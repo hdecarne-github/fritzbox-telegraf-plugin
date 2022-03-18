@@ -15,7 +15,7 @@
 # vendor/
 
 # Build artifacts
-.bin/*
+.build/*
 .go/*
 
 # Local configs
