@@ -1,5 +1,5 @@
 [![Downloads](https://img.shields.io/github/downloads/hdecarne-github/fritzbox-telegraf-plugin/total.svg)](https://github.com/hdecarne-github/fritzbox-telegraf-plugin/releases)
-[![Build](https://github.com/hdecarne-github/fritzbox-telegraf-plugin/actions/workflows/build-on-linux.yml/badge.svg)](https://github.com/hdecarne-github/fritzbox-telegraf-plugin/actions/workflows/build-on-linux.yml)
+[![Build](https://github.com/hdecarne-github/fritzbox-telegraf-plugin/actions/workflows/build.yml/badge.svg)](https://github.com/hdecarne-github/fritzbox-telegraf-plugin/actions/workflows/build.yml)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=hdecarne-github_fritzbox-telegraf-plugin&metric=coverage)](https://sonarcloud.io/summary/new_code?id=hdecarne-github_fritzbox-telegraf-plugin)
 
 ## About fritzbox-telegraf-plugin
