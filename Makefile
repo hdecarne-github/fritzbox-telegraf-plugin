@@ -24,7 +24,7 @@ $(plugin_name):
 	cp $(plugin_conf) .build/bin/
 
 .PHONY: dist
-dist: all
+dist: $(plugin_name)
 	mkdir -p .build/dist
 	tar czvf .build/dist/$(plugin_name)-$(GOOS)-$(GOARCH)-$(version).tar.gz -C .build/bin .
 	zip -j .build/dist/$(plugin_name)-$(GOOS)-$(GOARCH)-$(version).zip .build/bin/*
