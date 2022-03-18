@@ -29,6 +29,8 @@ dist: $(plugin_name)
 	tar czvf .build/dist/$(plugin_name)-$(GOOS)-$(GOARCH)-$(version).tar.gz -C .build/bin .
 ifneq (, $(shell which zip))
 	zip -j .build/dist/$(plugin_name)-$(GOOS)-$(GOARCH)-$(version).zip .build/bin/*
+else ifneq (, $(shell which 7za))
+	7za a -bd .build/dist/$(plugin_name)-$(GOOS)-$(GOARCH)-$(version).zip ./.build/bin/*
 endif
 
 .PHONY: test
