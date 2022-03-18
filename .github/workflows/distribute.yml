@@ -1,6 +1,7 @@
-name: build
+name: distribute
 
-on: [workflow_dispatch]
+on:
+  - workflow_dispatch
 
 jobs:
   build:
@@ -11,7 +12,8 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
