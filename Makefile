@@ -1,4 +1,5 @@
 version :=  $(shell cat version.txt)
+plugin_package := github.com/hdecarne/fritzbox-telegraf-plugin/plugins/inputs/fritzbox
 plugin_name := fritzbox-telegraf-plugin
 plugin_conf := fritzbox.conf
 
@@ -6,7 +7,7 @@ MAKEFLAGS += --no-print-directory
 GOOS ?= $(shell go env GOOS)
 GOARCH ?= $(shell go env GOARCH)
 
-LDFLAGS := $(LDFLAGS) -X main.version=$(version) -X main.goos=$(GOOS) -X main.goarch=$(GOARCH)
+LDFLAGS := $(LDFLAGS) -X $(plugin_package).plugin=$(plugin_name) -X $(plugin_package).version=$(version) -X $(plugin_package).goos=$(GOOS) -X $(plugin_package).goarch=$(GOARCH)
 
 .PHONY: all
 all:
@@ -20,16 +21,20 @@ deps:
 
 .PHONY: $(plugin_name)
 $(plugin_name):
+ifneq (windows, $(GOOS))
 	go build -ldflags "$(LDFLAGS)" -o .build/bin/$(plugin_name) ./cmd/$(plugin_name)
+else
+	go build -ldflags "$(LDFLAGS)" -o .build/bin/$(plugin_name).exe ./cmd/$(plugin_name)
+endif
 	cp $(plugin_conf) .build/bin/
 
 .PHONY: dist
-dist: $(plugin_name)
+dist:
 	mkdir -p .build/dist
 	tar czvf .build/dist/$(plugin_name)-$(GOOS)-$(GOARCH)-$(version).tar.gz -C .build/bin .
-ifneq (, $(shell which zip))
+ifneq (, $(shell command -v zip 2>/dev/null))
 	zip -j .build/dist/$(plugin_name)-$(GOOS)-$(GOARCH)-$(version).zip .build/bin/*
-else ifneq (, $(shell which 7za))
+else ifneq (, $(shell command -v 7za 2>/dev/null))
 	7za a -bd .build/dist/$(plugin_name)-$(GOOS)-$(GOARCH)-$(version).zip ./.build/bin/*
 endif
 
