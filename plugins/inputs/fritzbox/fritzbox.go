@@ -1,3 +1,10 @@
+// fritzbox.go
+//
+// Copyright (C) 2022 Holger de Carne
+//
+// This software may be modified and distributed under the terms
+// of the MIT license.  See the LICENSE file for details.
+//
 package fritzbox
 
 import (
@@ -17,6 +24,11 @@ import (
 	"github.com/influxdata/telegraf"
 	"github.com/influxdata/telegraf/plugins/inputs"
 )
+
+var plugin = "<undefined>"
+var version = "<undefined>"
+var goos = "<undefined>"
+var goarch = "<undefined>"
 
 type deviceInfo struct {
 	BaseUrl              *url.URL
@@ -573,6 +585,7 @@ func (fb *FritzBox) getClient() *http.Client {
 }
 
 func init() {
+	log.Printf("%s-%s-%s-%s", plugin, goos, goarch, version)
 	inputs.Add("fritzbox", func() telegraf.Input {
 		return NewFritzBox()
 	})
