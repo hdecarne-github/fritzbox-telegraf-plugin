@@ -2,12 +2,12 @@
 This [Telegraf](https://github.com/influxdata/telegraf) input plugin gathers stats from [AVM](https://avm.de/) FRITZ!Box devices. It uses the device's [TR-064](https://avm.de/service/schnittstellen/) interfaces to retrieve the stats. DSL routers as well as WLAN repeaters are supported.
 
 ### Installation
-To install the plugin you have to download a suitable [release archive](https://github.com/hdecarne-github/fritzbox-telegraf-plugin/releases) and extract it or clone the repository. Afterwards build the plugin via a simple
+To install the plugin you have to download a suitable [release archive](https://github.com/hdecarne-github/fritzbox-telegraf-plugin/releases) and extract it or build it from source by cloning the repository and issueing a simple
 ```
 make
 ```
-Go version 1.16 or higher is required to build the plugin. The resulting plugin binary will be written to **./build/bin**.
-Copy the plugin binary to a location of your choice (e.g. /usr/local/lib/telegraf/)
+To build the plugin, Go version 1.16 or higher is required. The resulting plugin binary will be written to **./build/bin**.
+Copy the either extracted or build plugin binary to a location of your choice (e.g. /usr/local/lib/telegraf/).
 
 ### Configuration
 This is an [external plugin](https://github.com/influxdata/telegraf/blob/master/docs/EXTERNAL_PLUGINS.md) which has to be integrated via Telegraf's [excecd plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/execd).
