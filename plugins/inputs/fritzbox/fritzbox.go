@@ -472,7 +472,9 @@ func (fb *FritzBox) processHostsMeshService(a telegraf.Accumulator, deviceInfo *
 							tags := make(map[string]string)
 							tags["fritz_device"] = deviceInfo.BaseUrl.Hostname()
 							tags["service"] = service.ShortServiceId()
-							tags["node_link"] = node.DeviceName + ":" + nodeInterface.Type + ":" + nodeInterface.Name
+							tags["fritz_mesh_node_name"] = node.DeviceName
+							tags["fritz_mesh_node_type"] = nodeInterface.Type
+							tags["fritz_mesh_node_link"] = node.DeviceName + ":" + nodeInterface.Type + ":" + nodeInterface.Name
 							fields := make(map[string]interface{})
 							fields["max_data_rate_rx"] = nodeLink.MaxDataRateRx
 							fields["max_data_rate_tx"] = nodeLink.MaxDataRateTx

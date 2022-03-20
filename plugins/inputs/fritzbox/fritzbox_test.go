@@ -44,7 +44,9 @@ func TestGather1(t *testing.T) {
 	fb := NewFritzBox()
 	fb.Devices = [][]string{{testServer.URL, "user", "secret"}}
 	fb.Debug = testServerHandler.Debug
+
 	var a testutil.Accumulator
+
 	require.NoError(t, a.GatherError(fb.Gather))
 }
 
