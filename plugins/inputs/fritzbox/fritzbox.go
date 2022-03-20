@@ -11,6 +11,7 @@ import (
 	"crypto/md5"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -34,6 +35,7 @@ type deviceInfo struct {
 	BaseUrl              *url.URL
 	Login                string
 	Password             string
+	GetMeshInfo          bool
 	ServiceInfo          *tr64Desc
 	cachedAuthentication [2]string
 }
@@ -69,6 +71,7 @@ type FritzBox struct {
 	GetWANInfo     bool       `toml:"get_wan_info"`
 	GetDSLInfo     bool       `toml:"get_dsl_info"`
 	GetPPPInfo     bool       `toml:"get_ppp_info"`
+	GetMeshInfo    []string   `toml:"get_mesh_info"`
 	FullQueryCycle int        `toml:"full_query_cycle"`
 	Debug          bool       `toml:"debug"`
 
@@ -86,6 +89,7 @@ func NewFritzBox() *FritzBox {
 		GetWANInfo:     true,
 		GetDSLInfo:     true,
 		GetPPPInfo:     true,
+		GetMeshInfo:    []string{},
 		FullQueryCycle: 6,
 
 		deviceInfos: make(map[string]*deviceInfo)}
@@ -190,6 +194,10 @@ func (fb *FritzBox) processServices(a telegraf.Accumulator, deviceInfo *deviceIn
 		} else if strings.HasPrefix(service.ServiceType, "urn:dslforum-org:service:WANPPPConnection:") {
 			if fb.GetPPPInfo && fullQuery {
 				a.AddError(fb.processPPPConnectionService(a, deviceInfo, &service))
+			}
+		} else if strings.HasPrefix(service.ServiceType, "urn:dslforum-org:service:Hosts:") {
+			if deviceInfo.GetMeshInfo && fullQuery {
+				a.AddError(fb.processHostsMeshService(a, deviceInfo, &service))
 			}
 		}
 
@@ -402,6 +410,84 @@ func (fb *FritzBox) processPPPConnectionService(a telegraf.Accumulator, deviceIn
 	return nil
 }
 
+type meshList struct {
+	SchemaVersion string         `json:"schema_version"`
+	Nodes         []meshListNode `json:"nodes"`
+}
+
+type meshListNode struct {
+	Uid            string                  `json:"uid"`
+	DeviceName     string                  `json:"device_name"`
+	IsMeshed       bool                    `json:"is_meshed"`
+	MeshRole       string                  `json:"mesh_role"`
+	NodeInterfaces []meshListNodeInterface `json:"node_interfaces"`
+}
+
+type meshListNodeInterface struct {
+	Name      string             `json:"name"`
+	Type      string             `json:"type"`
+	NodeLinks []meshListNodeLink `json:"node_links"`
+}
+
+type meshListNodeLink struct {
+	State         string `json:"state"`
+	Node1Uid      string `json:"node_1_uid"`
+	Node2Uid      string `json:"node_2_uid"`
+	MaxDataRateRx int    `json:"max_data_rate_rx"`
+	MaxDataRateTx int    `json:"max_data_rate_tx"`
+	CurDataRateRx int    `json:"cur_data_rate_rx"`
+	CurDataRateTx int    `json:"cur_data_rate_tx"`
+}
+
+func (fb *FritzBox) processHostsMeshService(a telegraf.Accumulator, deviceInfo *deviceInfo, service *tr64DescDeviceService) error {
+	meshListPath := struct {
+		MeshListPath string `xml:"Body>X_AVM-DE_GetMeshListPathResponse>NewX_AVM-DE_MeshListPath"`
+	}{}
+	err := fb.invokeDeviceService(deviceInfo, service, "X_AVM-DE_GetMeshListPath", &meshListPath)
+	if err != nil {
+		return err
+	}
+
+	var meshList meshList
+
+	_, err = fb.fetchJSON(deviceInfo.BaseUrl, meshListPath.MeshListPath, &meshList)
+	if err != nil {
+		return err
+	}
+
+	var masterNode *meshListNode
+
+	for _, node := range meshList.Nodes {
+		if node.IsMeshed && node.MeshRole == "master" {
+			masterNode = &node
+			break
+		}
+	}
+	if masterNode != nil {
+		for _, node := range meshList.Nodes {
+			if node.IsMeshed && node.MeshRole == "slave" {
+				for _, nodeInterface := range node.NodeInterfaces {
+					for _, nodeLink := range nodeInterface.NodeLinks {
+						if nodeLink.State == "CONNECTED" && nodeLink.Node1Uid == masterNode.Uid {
+							tags := make(map[string]string)
+							tags["fritz_device"] = deviceInfo.BaseUrl.Hostname()
+							tags["service"] = service.ShortServiceId()
+							tags["node_link"] = node.DeviceName + ":" + nodeInterface.Type + ":" + nodeInterface.Name
+							fields := make(map[string]interface{})
+							fields["max_data_rate_rx"] = nodeLink.MaxDataRateRx
+							fields["max_data_rate_tx"] = nodeLink.MaxDataRateTx
+							fields["cur_data_rate_rx"] = nodeLink.CurDataRateRx
+							fields["cur_data_rate_tx"] = nodeLink.CurDataRateTx
+							a.AddCounter("fritzbox_mesh", fields, tags)
+						}
+					}
+				}
+			}
+		}
+	}
+	return nil
+}
+
 func (fb *FritzBox) invokeDeviceService(deviceInfo *deviceInfo, service *tr64DescDeviceService, action string, out interface{}) error {
 	controlUrl, err := url.Parse(service.ControlURL)
 	if err != nil {
@@ -542,33 +628,64 @@ func (fb *FritzBox) fetchDeviceInfo(rawBaseUrl string, login string, password st
 
 		var serviceInfo tr64Desc
 
-		_, err = fb.fetchServiceInfo(baseUrl, "/tr64desc.xml", &serviceInfo)
+		_, err = fb.fetchXML(baseUrl, "/tr64desc.xml", &serviceInfo)
 		if err != nil {
 			return nil, err
+		}
+
+		var getMeshInfo bool
+
+		for _, meshMaster := range fb.GetMeshInfo {
+			if meshMaster == baseUrl.Hostname() {
+				getMeshInfo = true
+				break
+			}
 		}
 		cachedDeviceInfo = &deviceInfo{
 			BaseUrl:     baseUrl,
 			Login:       login,
 			Password:    password,
+			GetMeshInfo: getMeshInfo,
 			ServiceInfo: &serviceInfo}
 		fb.deviceInfos[rawBaseUrl] = cachedDeviceInfo
 	}
 	return cachedDeviceInfo, nil
 }
 
-func (fb *FritzBox) fetchServiceInfo(baseUrl *url.URL, path string, info interface{}) (*url.URL, error) {
-	pathUrl, _ := url.Parse(path)
+func (fb *FritzBox) fetchXML(baseUrl *url.URL, path string, v interface{}) (*url.URL, error) {
+	pathUrl, err := url.Parse(path)
+	if err != nil {
+		return nil, err
+	}
 	xmlUrl := baseUrl.ResolveReference(pathUrl)
 	if fb.Debug {
-		log.Printf("Fetching service info from: %s", xmlUrl)
+		log.Printf("Fetching XML from: %s", xmlUrl)
 	}
 	client := fb.getClient()
-	resp, err := client.Get(xmlUrl.String())
+	response, err := client.Get(xmlUrl.String())
 	if err != nil {
 		return xmlUrl, err
 	}
-	defer resp.Body.Close()
-	return xmlUrl, xml.NewDecoder(resp.Body).Decode(info)
+	defer response.Body.Close()
+	return xmlUrl, xml.NewDecoder(response.Body).Decode(v)
+}
+
+func (fb *FritzBox) fetchJSON(baseUrl *url.URL, path string, v interface{}) (*url.URL, error) {
+	pathUrl, err := url.Parse(path)
+	if err != nil {
+		return nil, err
+	}
+	jsonUrl := baseUrl.ResolveReference(pathUrl)
+	if fb.Debug {
+		log.Printf("Fetching JSON from: %s", jsonUrl)
+	}
+	client := fb.getClient()
+	response, err := client.Get(jsonUrl.String())
+	if err != nil {
+		return jsonUrl, err
+	}
+	defer response.Body.Close()
+	return jsonUrl, json.NewDecoder(response.Body).Decode(v)
 }
 
 func (fb *FritzBox) getClient() *http.Client {
