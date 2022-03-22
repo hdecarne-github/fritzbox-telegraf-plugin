@@ -250,12 +250,20 @@ func (fb *FritzBox) processWLANConfigurationService(a telegraf.Accumulator, devi
 		tags := make(map[string]string)
 		tags["fritz_device"] = deviceInfo.BaseUrl.Hostname()
 		tags["service"] = service.ShortServiceId()
-		tags["access_point"] = deviceInfo.BaseUrl.Hostname() + ":" + info.SSID + ":" + info.Channel
+		tags["fritz_wlan_channel"] = deviceInfo.BaseUrl.Hostname() + ":" + info.SSID + ":" + info.Channel
+		tags["fritz_wlan_network"] = deviceInfo.BaseUrl.Hostname() + ":" + info.SSID + ":" + getNetworkFromChannel(info.Channel)
 		fields := make(map[string]interface{})
 		fields["total_associations"] = totalAssociations.TotalAssociations
 		a.AddCounter("fritzbox_wlan", fields, tags)
 	}
 	return nil
+}
+
+func getNetworkFromChannel(channel string) string {
+	if strings.Contains("1 2 3 4 5 6 7 8 9 10 11 12 13 14", channel) {
+		return "2G"
+	}
+	return "5G"
 }
 
 func (fb *FritzBox) processWANCommonInterfaceConfigService(a telegraf.Accumulator, deviceInfo *deviceInfo, service *tr64DescDeviceService) error {
