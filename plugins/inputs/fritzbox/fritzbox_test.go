@@ -13,6 +13,8 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"os"
 	"regexp"
 	"testing"
 
@@ -41,13 +43,62 @@ func TestGather1(t *testing.T) {
 	testServerHandler := &testServerHandler{Debug: true}
 	testServer := httptest.NewServer(testServerHandler)
 	defer testServer.Close()
+	testServerURL, err := url.Parse(testServer.URL)
+	require.NoError(t, err)
 	fb := NewFritzBox()
 	fb.Devices = [][]string{{testServer.URL, "user", "secret"}}
+	fb.GetMeshInfo = []string{testServerURL.Hostname()}
+	fb.Log = createDummyLogger()
 	fb.Debug = testServerHandler.Debug
 
 	var a testutil.Accumulator
 
 	require.NoError(t, a.GatherError(fb.Gather))
+	require.True(t, a.HasMeasurement("fritzbox_device"))
+	require.True(t, a.HasMeasurement("fritzbox_wlan"))
+	require.True(t, a.HasMeasurement("fritzbox_wan"))
+	require.True(t, a.HasMeasurement("fritzbox_dsl"))
+	require.True(t, a.HasMeasurement("fritzbox_ppp"))
+	require.True(t, a.HasMeasurement("fritzbox_mesh"))
+}
+
+func createDummyLogger() *dummyLogger {
+	log.SetOutput(os.Stderr)
+	return &dummyLogger{}
+}
+
+type dummyLogger struct{}
+
+func (l *dummyLogger) Errorf(format string, args ...interface{}) {
+	log.Printf(format, args...)
+}
+
+func (l *dummyLogger) Error(args ...interface{}) {
+	log.Print(args...)
+}
+
+func (l *dummyLogger) Debugf(format string, args ...interface{}) {
+	log.Printf(format, args...)
+}
+
+func (l *dummyLogger) Debug(args ...interface{}) {
+	log.Print(args...)
+}
+
+func (l *dummyLogger) Warnf(format string, args ...interface{}) {
+	log.Printf(format, args...)
+}
+
+func (l *dummyLogger) Warn(args ...interface{}) {
+	log.Print(args...)
+}
+
+func (l *dummyLogger) Infof(format string, args ...interface{}) {
+	log.Printf(format, args...)
+}
+
+func (l *dummyLogger) Info(args ...interface{}) {
+	log.Print(args...)
 }
 
 type testServerHandler struct {
@@ -81,6 +132,10 @@ func (tsh *testServerHandler) ServeHTTP(out http.ResponseWriter, request *http.R
 		tsh.serveWANDSLIfConfig1(out, request)
 	} else if requestURL == "/upnp/control/wanpppconn1" {
 		tsh.serveWANPPPConn1(out, request)
+	} else if requestURL == "/upnp/control/hosts" {
+		tsh.serveHosts(out, request)
+	} else if requestURL == "/meshlist.lua?sid=9f46d0308fd4fdd9" {
+		tsh.serveHostsMeshList(out, request)
 	}
 }
 
@@ -606,6 +661,83 @@ func (tsh *testServerHandler) serveWANPPPConn1(out http.ResponseWriter, request 
 	}
 }
 
+const testHostsGetMeshListPath = `
+<?xml version="1.0"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<s:Body>
+<u:X_AVM-DE_GetMeshListPathResponse xmlns:u="urn:dslforum-org:service:Hosts:1">
+<NewX_AVM-DE_MeshListPath>/meshlist.lua?sid=9f46d0308fd4fdd9</NewX_AVM-DE_MeshListPath>
+</u:X_AVM-DE_GetMeshListPathResponse>
+</s:Body>
+</s:Envelope>
+`
+
+func (tsh *testServerHandler) serveHosts(out http.ResponseWriter, request *http.Request) {
+	action := tsh.getSoapAction(request, "urn:LanDeviceHosts-com:serviceId:Hosts1")
+	if action == "X_AVM-DE_GetMeshListPath" {
+		tsh.writeXML(out, testHostsGetMeshListPath)
+	}
+}
+
+const testHostsMeshList = `
+{
+	"schema_version": "4.7",
+	"nodes": [
+		{
+			"uid": "n-1",
+			"device_name": "master1",
+			"is_meshed": true,
+			"mesh_role": "master",
+			"node_interfaces": [
+
+			]
+		},
+		{
+			"uid": "n-145",
+			"device_name": "slave1",
+			"is_meshed": true,
+			"mesh_role": "slave",
+			"node_interfaces": [
+				{
+					"name": "UPLINK:5G:0",
+					"type": "WLAN",
+					"node_links": [
+						{
+							"state": "CONNECTED",
+							"node_1_uid": "n-1",
+							"node_2_uid": "n-145",
+							"max_data_rate_rx": 1300000,
+							"max_data_rate_tx": 1300000,
+							"cur_data_rate_rx": 1300000,
+							"cur_data_rate_tx": 975000
+						}
+					]
+				},
+				{
+					"name": "UPLINK:2G:0",
+					"type": "WLAN",
+					"node_links": [
+						{
+							"state": "CONNECTED",
+							"node_1_uid": "n-1",
+							"node_2_uid": "n-145",
+							"max_data_rate_rx": 216000,
+							"max_data_rate_tx": 216000,
+							"cur_data_rate_rx": 216000,
+							"cur_data_rate_tx": 216000
+						}
+					]
+				}
+			]
+		}
+	]
+}
+`
+
+func (tsh *testServerHandler) serveHostsMeshList(out http.ResponseWriter, request *http.Request) {
+	tsh.writeJSON(out, testHostsMeshList)
+}
+
 func (tsh *testServerHandler) getSoapAction(request *http.Request, uri string) string {
 	matcher := regexp.MustCompile(fmt.Sprintf(`(?s)<u:(.*) xmlns:u="%s" />`, uri))
 	defer request.Body.Close()
@@ -623,4 +755,9 @@ func (tsh *testServerHandler) getSoapAction(request *http.Request, uri string) s
 func (tsh *testServerHandler) writeXML(out http.ResponseWriter, xml string) {
 	out.Header().Add("Content-Type", "application/xml")
 	_, _ = out.Write([]byte(xml))
+}
+
+func (tsh *testServerHandler) writeJSON(out http.ResponseWriter, json string) {
+	out.Header().Add("Content-Type", "application/json")
+	_, _ = out.Write([]byte(json))
 }

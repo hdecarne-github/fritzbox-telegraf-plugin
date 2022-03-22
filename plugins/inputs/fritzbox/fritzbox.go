@@ -16,7 +16,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -26,10 +25,12 @@ import (
 	"github.com/influxdata/telegraf/plugins/inputs"
 )
 
-var plugin = "<undefined>"
-var version = "<undefined>"
-var goos = "<undefined>"
-var goarch = "<undefined>"
+const undefined = "<undefined>"
+
+var plugin = undefined
+var version = undefined
+var goos = undefined
+var goarch = undefined
 
 type deviceInfo struct {
 	BaseUrl              *url.URL
@@ -75,6 +76,8 @@ type FritzBox struct {
 	FullQueryCycle int        `toml:"full_query_cycle"`
 	Debug          bool       `toml:"debug"`
 
+	Log telegraf.Logger
+
 	deviceInfos  map[string]*deviceInfo
 	cachedClient *http.Client
 	queryCounter int
@@ -111,6 +114,8 @@ func (fb *FritzBox) SampleConfig() string {
   # get_dsl_info = true
   ## Process PPP services (if found)
   # get_ppp_info = true
+  ## Process Mesh infos for selected hosts (must be one of the hosts defined in devices)
+  # get_mesh_info = []
   ## The cycle count, at which low-traffic stats are queried
   # full_query_cycle = 6
   ## Enable debug output
@@ -151,7 +156,7 @@ func (fb *FritzBox) Gather(a telegraf.Accumulator) error {
 
 func (fb *FritzBox) processRootDevice(a telegraf.Accumulator, deviceInfo *deviceInfo) error {
 	if fb.Debug {
-		log.Printf("Considering root device: %s", deviceInfo.ServiceInfo.FriendlyName)
+		fb.Log.Infof("Considering root device: %s", deviceInfo.ServiceInfo.FriendlyName)
 	}
 	fb.processServices(a, deviceInfo, deviceInfo.ServiceInfo.Services)
 	fb.processDevices(a, deviceInfo, deviceInfo.ServiceInfo.Devices)
@@ -161,7 +166,7 @@ func (fb *FritzBox) processRootDevice(a telegraf.Accumulator, deviceInfo *device
 func (fb *FritzBox) processDevices(a telegraf.Accumulator, deviceInfo *deviceInfo, devices []tr64DescDevice) error {
 	for _, device := range devices {
 		if fb.Debug {
-			log.Printf("Considering device: %s", device.FriendlyName)
+			fb.Log.Infof("Considering device: %s", device.FriendlyName)
 		}
 		fb.processServices(a, deviceInfo, device.Services)
 		fb.processDevices(a, deviceInfo, device.Devices)
@@ -172,7 +177,7 @@ func (fb *FritzBox) processDevices(a telegraf.Accumulator, deviceInfo *deviceInf
 func (fb *FritzBox) processServices(a telegraf.Accumulator, deviceInfo *deviceInfo, services []tr64DescDeviceService) error {
 	for _, service := range services {
 		if fb.Debug {
-			log.Printf("Considering service type: %s", service.ServiceType)
+			fb.Log.Infof("Considering service type: %s", service.ServiceType)
 		}
 		fullQuery := fb.queryCounter == 0
 		if strings.HasPrefix(service.ServiceType, "urn:dslforum-org:service:DeviceInfo:") {
@@ -527,7 +532,7 @@ func (fb *FritzBox) invokeDeviceService(deviceInfo *deviceInfo, service *tr64Des
 		return err
 	}
 	if fb.Debug {
-		log.Printf("Response:\n%s", responseBody)
+		fb.Log.Infof("Response:\n%s", responseBody)
 	}
 	err = xml.Unmarshal(responseBody, out)
 	if err != nil {
@@ -538,7 +543,7 @@ func (fb *FritzBox) invokeDeviceService(deviceInfo *deviceInfo, service *tr64Des
 
 func (fb *FritzBox) postSoapActionRequest(endpoint string, action string, requestBody string, authentication string) (*http.Response, error) {
 	if fb.Debug {
-		log.Printf("Invoking SOAP action %s on endpoint %s ...", action, endpoint)
+		fb.Log.Infof("Invoking SOAP action %s on endpoint %s ...", action, endpoint)
 	}
 	request, err := http.NewRequest(http.MethodPost, endpoint, strings.NewReader(requestBody))
 	if err != nil {
@@ -555,7 +560,7 @@ func (fb *FritzBox) postSoapActionRequest(endpoint string, action string, reques
 		return response, err
 	}
 	if fb.Debug {
-		log.Printf("Status code: %d", response.StatusCode)
+		fb.Log.Infof("Status code: %d", response.StatusCode)
 	}
 	return response, nil
 }
@@ -585,13 +590,13 @@ func (fb *FritzBox) getDigestAuthentication(challenge *http.Response, deviceInfo
 		}
 	}
 	digestRealm := challengeValues["Digest realm"]
-	ha1 := md5Hash(fmt.Sprintf("%s:%s:%s", deviceInfo.Login, digestRealm, deviceInfo.Password))
-	ha2 := md5Hash(fmt.Sprintf("%s:%s", http.MethodPost, uri))
+	ha1 := fb.md5Hash(fmt.Sprintf("%s:%s:%s", deviceInfo.Login, digestRealm, deviceInfo.Password))
+	ha2 := fb.md5Hash(fmt.Sprintf("%s:%s", http.MethodPost, uri))
 	nonce := challengeValues["nonce"]
 	qop := challengeValues["qop"]
-	cnonce := generateCNonce()
+	cnonce := fb.generateCNonce()
 	nc := "1"
-	response := md5Hash(fmt.Sprintf("%s:%s:%s:%s:%s:%s", ha1, nonce, nc, cnonce, qop, ha2))
+	response := fb.md5Hash(fmt.Sprintf("%s:%s:%s:%s:%s:%s", ha1, nonce, nc, cnonce, qop, ha2))
 	authentication := fmt.Sprintf(`Digest username="%s", realm="%s", nonce="%s", uri="%s", cnonce="%s", nc="%v", qop="%s", response="%s"`,
 		deviceInfo.Login, digestRealm, nonce, uri, cnonce, nc, qop, response)
 	deviceInfo.cachedAuthentication[0] = uri
@@ -599,19 +604,21 @@ func (fb *FritzBox) getDigestAuthentication(challenge *http.Response, deviceInfo
 	return authentication, nil
 }
 
-func md5Hash(in string) string {
+func (fb *FritzBox) md5Hash(in string) string {
 	hash := md5.New()
 	_, err := hash.Write([]byte(in))
 	if err != nil {
+		fb.Log.Error(err)
 		panic(err)
 	}
 	return hex.EncodeToString(hash.Sum(nil))
 }
 
-func generateCNonce() string {
+func (fb *FritzBox) generateCNonce() string {
 	cnonceBytes := make([]byte, 8)
 	_, err := io.ReadFull(rand.Reader, cnonceBytes)
 	if err != nil {
+		fb.Log.Error(err)
 		panic(err)
 	}
 	return fmt.Sprintf("%016x", cnonceBytes)
@@ -621,7 +628,7 @@ func (fb *FritzBox) fetchDeviceInfo(rawBaseUrl string, login string, password st
 	cachedDeviceInfo, cached := fb.deviceInfos[rawBaseUrl]
 	if !cached {
 		if fb.Debug {
-			log.Printf("Querying device info for: %s", rawBaseUrl)
+			fb.Log.Infof("Querying device info for: %s", rawBaseUrl)
 		}
 		baseUrl, err := url.Parse(rawBaseUrl)
 		if err != nil {
@@ -661,7 +668,7 @@ func (fb *FritzBox) fetchXML(baseUrl *url.URL, path string, v interface{}) (*url
 	}
 	xmlUrl := baseUrl.ResolveReference(pathUrl)
 	if fb.Debug {
-		log.Printf("Fetching XML from: %s", xmlUrl)
+		fb.Log.Infof("Fetching XML from: %s", xmlUrl)
 	}
 	client := fb.getClient()
 	response, err := client.Get(xmlUrl.String())
@@ -679,7 +686,7 @@ func (fb *FritzBox) fetchJSON(baseUrl *url.URL, path string, v interface{}) (*ur
 	}
 	jsonUrl := baseUrl.ResolveReference(pathUrl)
 	if fb.Debug {
-		log.Printf("Fetching JSON from: %s", jsonUrl)
+		fb.Log.Infof("Fetching JSON from: %s", jsonUrl)
 	}
 	client := fb.getClient()
 	response, err := client.Get(jsonUrl.String())
@@ -704,7 +711,6 @@ func (fb *FritzBox) getClient() *http.Client {
 }
 
 func init() {
-	log.Printf("%s-%s-%s-%s", plugin, goos, goarch, version)
 	inputs.Add("fritzbox", func() telegraf.Input {
 		return NewFritzBox()
 	})
