@@ -221,7 +221,7 @@ func (fb *FritzBox) processDeviceInfoService(a telegraf.Accumulator, deviceInfo 
 	}
 	tags := make(map[string]string)
 	tags["fritz_device"] = deviceInfo.BaseUrl.Hostname()
-	tags["service"] = service.ShortServiceId()
+	tags["fritz_service"] = service.ShortServiceId()
 	fields := make(map[string]interface{})
 	fields["uptime"] = info.UpTime
 	fields["model_name"] = info.ModelName
@@ -249,7 +249,7 @@ func (fb *FritzBox) processWLANConfigurationService(a telegraf.Accumulator, devi
 	if info.Status == "Up" {
 		tags := make(map[string]string)
 		tags["fritz_device"] = deviceInfo.BaseUrl.Hostname()
-		tags["service"] = service.ShortServiceId()
+		tags["fritz_service"] = service.ShortServiceId()
 		tags["fritz_wlan_channel"] = deviceInfo.BaseUrl.Hostname() + ":" + info.SSID + ":" + info.Channel
 		tags["fritz_wlan_network"] = deviceInfo.BaseUrl.Hostname() + ":" + info.SSID + ":" + getNetworkFromChannel(info.Channel)
 		fields := make(map[string]interface{})
@@ -310,7 +310,7 @@ func (fb *FritzBox) processWANCommonInterfaceConfigService(a telegraf.Accumulato
 	if commonLinkProperties.PhysicalLinkStatus == "Up" {
 		tags := make(map[string]string)
 		tags["fritz_device"] = deviceInfo.BaseUrl.Hostname()
-		tags["service"] = service.ShortServiceId()
+		tags["fritz_service"] = service.ShortServiceId()
 		fields := make(map[string]interface{})
 		fields["layer1_upstream_max_bit_rate"] = commonLinkProperties.Layer1UpstreamMaxBitRate
 		fields["layer1_downstream_max_bit_rate"] = commonLinkProperties.Layer1DownstreamMaxBitRate
@@ -367,7 +367,7 @@ func (fb *FritzBox) processDSLInterfaceConfigService(a telegraf.Accumulator, dev
 	if info.Status == "Up" {
 		tags := make(map[string]string)
 		tags["fritz_device"] = deviceInfo.BaseUrl.Hostname()
-		tags["service"] = service.ShortServiceId()
+		tags["fritz_service"] = service.ShortServiceId()
 		fields := make(map[string]interface{})
 		fields["upstream_curr_rate"] = info.UpstreamCurrRate
 		fields["downstream_curr_rate"] = info.DownstreamCurrRate
@@ -413,7 +413,7 @@ func (fb *FritzBox) processPPPConnectionService(a telegraf.Accumulator, deviceIn
 	if info.ConnectionStatus == "Connected" {
 		tags := make(map[string]string)
 		tags["fritz_device"] = deviceInfo.BaseUrl.Hostname()
-		tags["service"] = service.ShortServiceId()
+		tags["fritz_service"] = service.ShortServiceId()
 		fields := make(map[string]interface{})
 		fields["uptime"] = info.Uptime
 		fields["upstream_max_bit_rate"] = info.UpstreamMaxBitRate
@@ -484,7 +484,7 @@ func (fb *FritzBox) processHostsMeshService(a telegraf.Accumulator, deviceInfo *
 						if nodeLink.State == "CONNECTED" && nodeLink.Node1Uid == masterNode.Uid {
 							tags := make(map[string]string)
 							tags["fritz_device"] = deviceInfo.BaseUrl.Hostname()
-							tags["service"] = service.ShortServiceId()
+							tags["fritz_service"] = service.ShortServiceId()
 							tags["fritz_mesh_node_name"] = node.DeviceName
 							tags["fritz_mesh_node_type"] = nodeInterface.Type
 							tags["fritz_mesh_node_link"] = node.DeviceName + ":" + nodeInterface.Type + ":" + nodeInterface.Name
