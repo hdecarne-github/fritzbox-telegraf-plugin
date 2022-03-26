@@ -22,20 +22,20 @@ deps:
 .PHONY: $(plugin_name)
 $(plugin_name):
 ifneq (windows, $(GOOS))
-	go build -ldflags "$(LDFLAGS)" -o .build/bin/$(plugin_name) ./cmd/$(plugin_name)
+	go build -ldflags "$(LDFLAGS)" -o build/bin/$(plugin_name) ./cmd/$(plugin_name)
 else
-	go build -ldflags "$(LDFLAGS)" -o .build/bin/$(plugin_name).exe ./cmd/$(plugin_name)
+	go build -ldflags "$(LDFLAGS)" -o build/bin/$(plugin_name).exe ./cmd/$(plugin_name)
 endif
-	cp $(plugin_conf) .build/bin/
+	cp $(plugin_conf) build/bin/
 
 .PHONY: dist
 dist:
-	mkdir -p .build/dist
-	tar czvf .build/dist/$(plugin_name)-$(GOOS)-$(GOARCH)-$(version).tar.gz -C .build/bin .
+	mkdir -p build/dist
+	tar czvf build/dist/$(plugin_name)-$(GOOS)-$(GOARCH)-$(version).tar.gz -C build/bin .
 ifneq (, $(shell command -v zip 2>/dev/null))
-	zip -j .build/dist/$(plugin_name)-$(GOOS)-$(GOARCH)-$(version).zip .build/bin/*
+	zip -j build/dist/$(plugin_name)-$(GOOS)-$(GOARCH)-$(version).zip build/bin/*
 else ifneq (, $(shell command -v 7z 2>/dev/null))
-	7z a -bd .build/dist/$(plugin_name)-$(GOOS)-$(GOARCH)-$(version).zip ./.build/bin/*
+	7z a -bd build/dist/$(plugin_name)-$(GOOS)-$(GOARCH)-$(version).zip ./build/bin/*
 endif
 
 .PHONY: test
@@ -49,6 +49,6 @@ tidy:
 
 .PHONY: clean
 clean:
-	rm -rf .build
+	rm -rf build
 	rm -rf .go
 	rm -f *.out
