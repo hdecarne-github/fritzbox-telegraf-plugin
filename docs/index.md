@@ -66,15 +66,6 @@ For every device and every configured WLAN (2.4 GHz and 5 GHz are considered sep
 
 ![WLAN Info](screen_wlan.png)
 
-#### WAN Info (get_wan_info)
-Reports the **fritzbox_wan** measurement:
-```
-fritzbox_wan,fritz_device=fritz.box,service=WANCommonInterfaceConfig1 layer1_downstream_max_bit_rate=240893000i,upstream_current_max_speed=6255i,downstream_current_max_speed=8027i,total_bytes_sent=31387049656i,total_bytes_received=214361402812i,layer1_upstream_max_bit_rate=49741000i 1647203434928636000
-```
-The current stats of the WAN link are reported (bandwidth, current rates, transfered bytes, ...).
-
-![WAN Info](screen_wan.png)
-
 #### Mesh Info (get_mesh_info)
 Reports the **fritzbox_mesh** measurement:
 ```
@@ -83,6 +74,15 @@ fritzbox_mesh,fritz_device=fritz.box,fritz_mesh_node_link=slave1:WLAN:UPLINK:5G:
 The current links as well as their stats are reported.
 
 ![Mesh Info](screen_mesh.png)
+
+#### WAN Info (get_wan_info)
+Reports the **fritzbox_wan** measurement:
+```
+fritzbox_wan,fritz_device=fritz.box,service=WANCommonInterfaceConfig1 layer1_downstream_max_bit_rate=240893000i,upstream_current_max_speed=6255i,downstream_current_max_speed=8027i,total_bytes_sent=31387049656i,total_bytes_received=214361402812i,layer1_upstream_max_bit_rate=49741000i 1647203434928636000
+```
+The current stats of the WAN link are reported (bandwidth, current rates, transfered bytes, ...).
+
+![WAN Info](screen_wan.png)
 
 #### DSL Info (get_dsl_info)
 Reports the **fritzbox_dsl** measurement:
