@@ -34,5 +34,5 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: build-dist
-          path: .build/dist
+          path: build/dist
           retention-days: 7
