@@ -16,3 +16,6 @@ SOFTWARE.
 
 ### v0.1.2 (2022-03-19)
 * Provide pre-build archives
+
+### v0.2.0 (2022-04-02)
+* Add fritz_mesh measurement

@@ -75,6 +75,15 @@ The current stats of the WAN link are reported (bandwidth, current rates, transf
 
 ![WAN Info](screen_wan.png)
 
+#### Mesh Info (get_mesh_info)
+Reports the **fritzbox_mesh** measurement:
+```
+fritzbox_mesh,fritz_device=fritz.box,fritz_mesh_node_link=slave1:WLAN:UPLINK:5G:0,fritz_mesh_node_name=slave1,fritz_mesh_node_type=WLAN,service=Hosts1 max_data_rate_rx=1300000i,max_data_rate_tx=1300000i,cur_data_rate_rx=1300000i,cur_data_rate_tx=1170000i 1647924367458027000
+```
+The current links as well as their stats are reported.
+
+![Mesh Info](screen_mesh.png)
+
 #### DSL Info (get_dsl_info)
 Reports the **fritzbox_dsl** measurement:
 ```
@@ -90,13 +99,6 @@ Reports the **fritzbox_ppp** measurement:
 fritzbox_ppp,fritz_device=fritz.box,service=WANPPPConnection1 upstream_max_bit_rate=45048452i,downstream_max_bit_rate=56093007i,uptime=774164i 1647204091697400000
 ```
 The current PPP stats are reported, especially the uptime (in seconds). The latter is shown in the WAN graph example above.
-
-#### Mesh Info (get_mesh_info)
-Reports the **fritzbox_mesh** measurement:
-```
-fritzbox_mesh,fritz_device=fritz.box,fritz_mesh_node_link=slave1:WLAN:UPLINK:5G:0,fritz_mesh_node_name=slave1,fritz_mesh_node_type=WLAN,service=Hosts1 max_data_rate_rx=1300000i,max_data_rate_tx=1300000i,cur_data_rate_rx=1300000i,cur_data_rate_tx=1170000i 1647924367458027000
-```
-The current links as well as their stats are reported.
 
 ### License
 This project is subject to the the MIT License.
