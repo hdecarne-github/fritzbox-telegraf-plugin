@@ -63,8 +63,8 @@ The uptime (in seconds) as well as the model name are reported for every configu
 #### WLAN Info (get_wlan_info)
 Reports the **fritzbox_wlan** measurement:
 ```
-fritzbox_wlan,access_point=fritz.box:MySSID:11,fritz_device=fritz.box,service=WLANConfiguration1 total_associations=2i 1647203147521085000
-fritzbox_wlan,access_point=fritz.box:MySSID:44,fritz_device=fritz.box,service=WLANConfiguration2 total_associations=7i 1647203148048754000
+fritzbox_wlan,fritz_wlan_channel=fritz.box:MySSID:11,fritz_wlan_network=fritz.box:MySSID:2G,fritz_device=fritz.box,service=WLANConfiguration1 total_associations=2i 1647203147521085000
+fritzbox_wlan,fritz_wlan_channel=fritz.box:MySSID:44,fritz_wlan_network=fritz.box:MySSID:5G,fritz_device=fritz.box,service=WLANConfiguration2 total_associations=7i 1647203148048754000
 ```
 For every device and every configured WLAN (2.4 GHz and 5 GHz are considered separate WLANs here) a stats line is created reporting the number of currently associated clients.
 
