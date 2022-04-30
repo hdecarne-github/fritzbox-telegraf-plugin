@@ -113,6 +113,7 @@ func (tsh *testServerHandler) ServeHTTP(out http.ResponseWriter, request *http.R
 	if request.Method == http.MethodPost && request.Header.Get("Authorization") == "" {
 		out.Header().Add("Www-Authenticate", `Digest realm="HTTPS Access",nonce="30492F0B4025DFF7",algorithm=MD5,qop="auth"`)
 		out.WriteHeader(http.StatusUnauthorized)
+		return
 	}
 	if requestURL == "/tr64desc.xml" {
 		tsh.serveTr64descXML(out)
