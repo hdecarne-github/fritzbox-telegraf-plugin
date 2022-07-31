@@ -10,6 +10,8 @@ GOOS ?= $(shell go env GOOS)
 GOARCH ?= $(shell go env GOARCH)
 GOBIN ?= $(shell go env GOPATH)/bin
 
+.DEFAULT_GOAL := build
+
 deps:
 	go mod download -x
 
