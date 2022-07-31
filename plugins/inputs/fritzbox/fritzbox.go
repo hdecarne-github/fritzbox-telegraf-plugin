@@ -5,6 +5,7 @@
 // This software may be modified and distributed under the terms
 // of the MIT license.  See the LICENSE file for details.
 //
+
 package fritzbox
 
 import (
@@ -24,13 +25,6 @@ import (
 	"github.com/influxdata/telegraf"
 	"github.com/influxdata/telegraf/plugins/inputs"
 )
-
-const undefined = "<undefined>"
-
-var plugin = undefined
-var version = undefined
-var goos = undefined
-var goarch = undefined
 
 type deviceInfo struct {
 	BaseUrl              *url.URL
@@ -98,7 +92,7 @@ func NewFritzBox() *FritzBox {
 		deviceInfos: make(map[string]*deviceInfo)}
 }
 
-func (fb *FritzBox) SampleConfig() string {
+func (plugin *FritzBox) SampleConfig() string {
 	return `
   ## The fritz devices to query (multiple triples of base url, login, password)
   devices = [["http://fritz.box:49000", "", ""]]
@@ -123,86 +117,86 @@ func (fb *FritzBox) SampleConfig() string {
 `
 }
 
-func (fb *FritzBox) Description() string {
+func (plugin *FritzBox) Description() string {
 	return "Gather FritzBox stats"
 }
 
-func (fb *FritzBox) Gather(a telegraf.Accumulator) error {
-	if len(fb.Devices) == 0 {
+func (plugin *FritzBox) Gather(a telegraf.Accumulator) error {
+	if len(plugin.Devices) == 0 {
 		return errors.New("fritzbox: Empty device list")
 	}
-	for _, device := range fb.Devices {
+	for _, device := range plugin.Devices {
 		if len(device) != 3 {
 			return fmt.Errorf("fritzbox: Invalid device entry: %s", device)
 		}
 		rawBaseUrl := device[0]
 		login := device[1]
 		password := device[2]
-		deviceInfo, err := fb.fetchDeviceInfo(rawBaseUrl, login, password)
+		deviceInfo, err := plugin.fetchDeviceInfo(rawBaseUrl, login, password)
 		if err == nil {
-			a.AddError(fb.processRootDevice(a, deviceInfo))
+			a.AddError(plugin.processRootDevice(a, deviceInfo))
 		} else {
 			a.AddError(err)
 		}
 	}
-	fb.queryCounter++
-	if 1 < fb.FullQueryCycle {
-		fb.queryCounter %= fb.FullQueryCycle
+	plugin.queryCounter++
+	if 1 < plugin.FullQueryCycle {
+		plugin.queryCounter %= plugin.FullQueryCycle
 	} else {
-		fb.queryCounter %= 1
+		plugin.queryCounter %= 1
 	}
 	return nil
 }
 
-func (fb *FritzBox) processRootDevice(a telegraf.Accumulator, deviceInfo *deviceInfo) error {
-	if fb.Debug {
-		fb.Log.Infof("Considering root device: %s", deviceInfo.ServiceInfo.FriendlyName)
+func (plugin *FritzBox) processRootDevice(a telegraf.Accumulator, deviceInfo *deviceInfo) error {
+	if plugin.Debug {
+		plugin.Log.Infof("Considering root device: %s", deviceInfo.ServiceInfo.FriendlyName)
 	}
-	fb.processServices(a, deviceInfo, deviceInfo.ServiceInfo.Services)
-	fb.processDevices(a, deviceInfo, deviceInfo.ServiceInfo.Devices)
+	plugin.processServices(a, deviceInfo, deviceInfo.ServiceInfo.Services)
+	plugin.processDevices(a, deviceInfo, deviceInfo.ServiceInfo.Devices)
 	return nil
 }
 
-func (fb *FritzBox) processDevices(a telegraf.Accumulator, deviceInfo *deviceInfo, devices []tr64DescDevice) error {
+func (plugin *FritzBox) processDevices(a telegraf.Accumulator, deviceInfo *deviceInfo, devices []tr64DescDevice) error {
 	for _, device := range devices {
-		if fb.Debug {
-			fb.Log.Infof("Considering device: %s", device.FriendlyName)
+		if plugin.Debug {
+			plugin.Log.Infof("Considering device: %s", device.FriendlyName)
 		}
-		fb.processServices(a, deviceInfo, device.Services)
-		fb.processDevices(a, deviceInfo, device.Devices)
+		plugin.processServices(a, deviceInfo, device.Services)
+		plugin.processDevices(a, deviceInfo, device.Devices)
 	}
 	return nil
 }
 
-func (fb *FritzBox) processServices(a telegraf.Accumulator, deviceInfo *deviceInfo, services []tr64DescDeviceService) error {
+func (plugin *FritzBox) processServices(a telegraf.Accumulator, deviceInfo *deviceInfo, services []tr64DescDeviceService) error {
 	for _, service := range services {
-		if fb.Debug {
-			fb.Log.Infof("Considering service type: %s", service.ServiceType)
+		if plugin.Debug {
+			plugin.Log.Infof("Considering service type: %s", service.ServiceType)
 		}
-		fullQuery := fb.queryCounter == 0
+		fullQuery := plugin.queryCounter == 0
 		if strings.HasPrefix(service.ServiceType, "urn:dslforum-org:service:DeviceInfo:") {
-			if fb.GetDeviceInfo && fullQuery {
-				a.AddError(fb.processDeviceInfoService(a, deviceInfo, &service))
+			if plugin.GetDeviceInfo && fullQuery {
+				a.AddError(plugin.processDeviceInfoService(a, deviceInfo, &service))
 			}
 		} else if strings.HasPrefix(service.ServiceType, "urn:dslforum-org:service:WLANConfiguration:") {
-			if fb.GetWLANInfo && fullQuery {
-				a.AddError(fb.processWLANConfigurationService(a, deviceInfo, &service))
+			if plugin.GetWLANInfo && fullQuery {
+				a.AddError(plugin.processWLANConfigurationService(a, deviceInfo, &service))
 			}
 		} else if strings.HasPrefix(service.ServiceType, "urn:dslforum-org:service:WANCommonInterfaceConfig:") {
-			if fb.GetWANInfo {
-				a.AddError(fb.processWANCommonInterfaceConfigService(a, deviceInfo, &service))
+			if plugin.GetWANInfo {
+				a.AddError(plugin.processWANCommonInterfaceConfigService(a, deviceInfo, &service))
 			}
 		} else if strings.HasPrefix(service.ServiceType, "urn:dslforum-org:service:WANDSLInterfaceConfig:") {
-			if fb.GetDSLInfo && fullQuery {
-				a.AddError(fb.processDSLInterfaceConfigService(a, deviceInfo, &service))
+			if plugin.GetDSLInfo && fullQuery {
+				a.AddError(plugin.processDSLInterfaceConfigService(a, deviceInfo, &service))
 			}
 		} else if strings.HasPrefix(service.ServiceType, "urn:dslforum-org:service:WANPPPConnection:") {
-			if fb.GetPPPInfo && fullQuery {
-				a.AddError(fb.processPPPConnectionService(a, deviceInfo, &service))
+			if plugin.GetPPPInfo && fullQuery {
+				a.AddError(plugin.processPPPConnectionService(a, deviceInfo, &service))
 			}
 		} else if strings.HasPrefix(service.ServiceType, "urn:dslforum-org:service:Hosts:") {
 			if deviceInfo.GetMeshInfo && fullQuery {
-				a.AddError(fb.processHostsMeshService(a, deviceInfo, &service))
+				a.AddError(plugin.processHostsMeshService(a, deviceInfo, &service))
 			}
 		}
 
@@ -210,12 +204,12 @@ func (fb *FritzBox) processServices(a telegraf.Accumulator, deviceInfo *deviceIn
 	return nil
 }
 
-func (fb *FritzBox) processDeviceInfoService(a telegraf.Accumulator, deviceInfo *deviceInfo, service *tr64DescDeviceService) error {
+func (plugin *FritzBox) processDeviceInfoService(a telegraf.Accumulator, deviceInfo *deviceInfo, service *tr64DescDeviceService) error {
 	info := struct {
 		UpTime    uint   `xml:"Body>GetInfoResponse>NewUpTime"`
 		ModelName string `xml:"Body>GetInfoResponse>NewModelName"`
 	}{}
-	err := fb.invokeDeviceService(deviceInfo, service, "GetInfo", &info)
+	err := plugin.invokeDeviceService(deviceInfo, service, "GetInfo", &info)
 	if err != nil {
 		return err
 	}
@@ -229,20 +223,20 @@ func (fb *FritzBox) processDeviceInfoService(a telegraf.Accumulator, deviceInfo 
 	return nil
 }
 
-func (fb *FritzBox) processWLANConfigurationService(a telegraf.Accumulator, deviceInfo *deviceInfo, service *tr64DescDeviceService) error {
+func (plugin *FritzBox) processWLANConfigurationService(a telegraf.Accumulator, deviceInfo *deviceInfo, service *tr64DescDeviceService) error {
 	info := struct {
 		Status  string `xml:"Body>GetInfoResponse>NewStatus"`
 		Channel string `xml:"Body>GetInfoResponse>NewChannel"`
 		SSID    string `xml:"Body>GetInfoResponse>NewSSID"`
 	}{}
-	err := fb.invokeDeviceService(deviceInfo, service, "GetInfo", &info)
+	err := plugin.invokeDeviceService(deviceInfo, service, "GetInfo", &info)
 	if err != nil {
 		return err
 	}
 	totalAssociations := struct {
 		TotalAssociations uint `xml:"Body>GetTotalAssociationsResponse>NewTotalAssociations"`
 	}{}
-	err = fb.invokeDeviceService(deviceInfo, service, "GetTotalAssociations", &totalAssociations)
+	err = plugin.invokeDeviceService(deviceInfo, service, "GetTotalAssociations", &totalAssociations)
 	if err != nil {
 		return err
 	}
@@ -266,7 +260,7 @@ func getNetworkFromChannel(channel string) string {
 	return "5G"
 }
 
-func (fb *FritzBox) processWANCommonInterfaceConfigService(a telegraf.Accumulator, deviceInfo *deviceInfo, service *tr64DescDeviceService) error {
+func (plugin *FritzBox) processWANCommonInterfaceConfigService(a telegraf.Accumulator, deviceInfo *deviceInfo, service *tr64DescDeviceService) error {
 	commonLinkProperties := struct {
 		Layer1UpstreamMaxBitRate   uint   `xml:"Body>GetCommonLinkPropertiesResponse>NewLayer1UpstreamMaxBitRate"`
 		Layer1DownstreamMaxBitRate uint   `xml:"Body>GetCommonLinkPropertiesResponse>NewLayer1DownstreamMaxBitRate"`
@@ -274,7 +268,7 @@ func (fb *FritzBox) processWANCommonInterfaceConfigService(a telegraf.Accumulato
 		UpstreamCurrentMaxSpeed    uint   `xml:"Body>GetCommonLinkPropertiesResponse>NewX_AVM-DE_UpstreamCurrentMaxSpeed"`
 		DownstreamCurrentMaxSpeed  uint   `xml:"Body>GetCommonLinkPropertiesResponse>NewX_AVM-DE_DownstreamCurrentMaxSpeed"`
 	}{}
-	err := fb.invokeDeviceService(deviceInfo, service, "GetCommonLinkProperties", &commonLinkProperties)
+	err := plugin.invokeDeviceService(deviceInfo, service, "GetCommonLinkProperties", &commonLinkProperties)
 	if err != nil {
 		return err
 	}
@@ -289,21 +283,21 @@ func (fb *FritzBox) processWANCommonInterfaceConfigService(a telegraf.Accumulato
 		TotalBytesSent64     uint64 `xml:"Body>GetAddonInfosResponse>NewX_AVM_DE_TotalBytesSent64"`
 		TotalBytesReceived64 uint64 `xml:"Body>GetAddonInfosResponse>NewX_AVM_DE_TotalBytesReceived64"`
 	}{}
-	err = fb.invokeDeviceService(deviceInfo, &igdWANCommonInterfaceConfigService, "GetAddonInfos", &addonInfos)
+	err = plugin.invokeDeviceService(deviceInfo, &igdWANCommonInterfaceConfigService, "GetAddonInfos", &addonInfos)
 	if err != nil {
 		return err
 	}
 	//totalBytesSent := struct {
 	//	TotalBytesSent uint `xml:"Body>GetTotalBytesSentResponse>NewTotalBytesSent"`
 	//}{}
-	//err = fb.invokeDeviceService(deviceInfo, service, "GetTotalBytesSent", &totalBytesSent)
+	//err = plugin.invokeDeviceService(deviceInfo, service, "GetTotalBytesSent", &totalBytesSent)
 	//if err != nil {
 	//	return err
 	//}
 	//totalBytesReceived := struct {
 	//	TotalBytesReceived uint `xml:"Body>GetTotalBytesReceivedResponse>NewTotalBytesReceived"`
 	//}{}
-	//err = fb.invokeDeviceService(deviceInfo, service, "GetTotalBytesReceived", &totalBytesReceived)
+	//err = plugin.invokeDeviceService(deviceInfo, service, "GetTotalBytesReceived", &totalBytesReceived)
 	//if err != nil {
 	//	return err
 	//}
@@ -325,7 +319,7 @@ func (fb *FritzBox) processWANCommonInterfaceConfigService(a telegraf.Accumulato
 	return nil
 }
 
-func (fb *FritzBox) processDSLInterfaceConfigService(a telegraf.Accumulator, deviceInfo *deviceInfo, service *tr64DescDeviceService) error {
+func (plugin *FritzBox) processDSLInterfaceConfigService(a telegraf.Accumulator, deviceInfo *deviceInfo, service *tr64DescDeviceService) error {
 	info := struct {
 		Status                string `xml:"Body>GetInfoResponse>NewStatus"`
 		UpstreamCurrRate      uint   `xml:"Body>GetInfoResponse>NewUpstreamCurrRate"`
@@ -339,7 +333,7 @@ func (fb *FritzBox) processDSLInterfaceConfigService(a telegraf.Accumulator, dev
 		UpstreamPower         uint   `xml:"Body>GetInfoResponse>NewUpstreamPower"`
 		DownstreamPower       uint   `xml:"Body>GetInfoResponse>NewDownstreamPower"`
 	}{}
-	err := fb.invokeDeviceService(deviceInfo, service, "GetInfo", &info)
+	err := plugin.invokeDeviceService(deviceInfo, service, "GetInfo", &info)
 	if err != nil {
 		return err
 	}
@@ -360,7 +354,7 @@ func (fb *FritzBox) processDSLInterfaceConfigService(a telegraf.Accumulator, dev
 		CRCErrors           uint `xml:"Body>GetStatisticsTotalResponse>NewCRCErrors"`
 		ATUCCRCErrors       uint `xml:"Body>GetStatisticsTotalResponse>NewATUCCRCErrors"`
 	}{}
-	err = fb.invokeDeviceService(deviceInfo, service, "GetStatisticsTotal", &statisticsTotal)
+	err = plugin.invokeDeviceService(deviceInfo, service, "GetStatisticsTotal", &statisticsTotal)
 	if err != nil {
 		return err
 	}
@@ -399,14 +393,14 @@ func (fb *FritzBox) processDSLInterfaceConfigService(a telegraf.Accumulator, dev
 	return nil
 }
 
-func (fb *FritzBox) processPPPConnectionService(a telegraf.Accumulator, deviceInfo *deviceInfo, service *tr64DescDeviceService) error {
+func (plugin *FritzBox) processPPPConnectionService(a telegraf.Accumulator, deviceInfo *deviceInfo, service *tr64DescDeviceService) error {
 	info := struct {
 		ConnectionStatus     string `xml:"Body>GetInfoResponse>NewConnectionStatus"`
 		Uptime               uint   `xml:"Body>GetInfoResponse>NewUptime"`
 		UpstreamMaxBitRate   uint   `xml:"Body>GetInfoResponse>NewUpstreamMaxBitRate"`
 		DownstreamMaxBitRate uint   `xml:"Body>GetInfoResponse>NewDownstreamMaxBitRate"`
 	}{}
-	err := fb.invokeDeviceService(deviceInfo, service, "GetInfo", &info)
+	err := plugin.invokeDeviceService(deviceInfo, service, "GetInfo", &info)
 	if err != nil {
 		return err
 	}
@@ -452,18 +446,18 @@ type meshListNodeLink struct {
 	CurDataRateTx int    `json:"cur_data_rate_tx"`
 }
 
-func (fb *FritzBox) processHostsMeshService(a telegraf.Accumulator, deviceInfo *deviceInfo, service *tr64DescDeviceService) error {
+func (plugin *FritzBox) processHostsMeshService(a telegraf.Accumulator, deviceInfo *deviceInfo, service *tr64DescDeviceService) error {
 	meshListPath := struct {
 		MeshListPath string `xml:"Body>X_AVM-DE_GetMeshListPathResponse>NewX_AVM-DE_MeshListPath"`
 	}{}
-	err := fb.invokeDeviceService(deviceInfo, service, "X_AVM-DE_GetMeshListPath", &meshListPath)
+	err := plugin.invokeDeviceService(deviceInfo, service, "X_AVM-DE_GetMeshListPath", &meshListPath)
 	if err != nil {
 		return err
 	}
 
 	var meshList meshList
 
-	_, err = fb.fetchJSON(deviceInfo.BaseUrl, meshListPath.MeshListPath, &meshList)
+	_, err = plugin.fetchJSON(deviceInfo.BaseUrl, meshListPath.MeshListPath, &meshList)
 	if err != nil {
 		return err
 	}
@@ -503,7 +497,7 @@ func (fb *FritzBox) processHostsMeshService(a telegraf.Accumulator, deviceInfo *
 	return nil
 }
 
-func (fb *FritzBox) invokeDeviceService(deviceInfo *deviceInfo, service *tr64DescDeviceService, action string, out interface{}) error {
+func (plugin *FritzBox) invokeDeviceService(deviceInfo *deviceInfo, service *tr64DescDeviceService, action string, out interface{}) error {
 	controlUrl, err := url.Parse(service.ControlURL)
 	if err != nil {
 		return err
@@ -517,15 +511,15 @@ func (fb *FritzBox) invokeDeviceService(deviceInfo *deviceInfo, service *tr64Des
 				<u:%s xmlns:u="%s" />
 			</s:Body>
 		</s:Envelope>`, action, service.ServiceId)
-	cachedAuthentication := fb.getCachedDigestAuthentication(deviceInfo, service.ServiceType)
-	response, err := fb.postSoapActionRequest(endpoint, soapAction, requestBody, cachedAuthentication)
+	cachedAuthentication := plugin.getCachedDigestAuthentication(deviceInfo, service.ServiceType)
+	response, err := plugin.postSoapActionRequest(endpoint, soapAction, requestBody, cachedAuthentication)
 	if err != nil {
 		return err
 	}
 	if response.StatusCode == http.StatusUnauthorized {
-		authentication, err := fb.getDigestAuthentication(response, deviceInfo, service.ServiceType)
+		authentication, err := plugin.getDigestAuthentication(response, deviceInfo, service.ServiceType)
 		if err == nil {
-			response, err = fb.postSoapActionRequest(endpoint, soapAction, requestBody, authentication)
+			response, err = plugin.postSoapActionRequest(endpoint, soapAction, requestBody, authentication)
 			if err != nil {
 				return err
 			}
@@ -539,8 +533,8 @@ func (fb *FritzBox) invokeDeviceService(deviceInfo *deviceInfo, service *tr64Des
 	if err != nil {
 		return err
 	}
-	if fb.Debug {
-		fb.Log.Infof("Response:\n%s", responseBody)
+	if plugin.Debug {
+		plugin.Log.Infof("Response:\n%s", responseBody)
 	}
 	err = xml.Unmarshal(responseBody, out)
 	if err != nil {
@@ -549,9 +543,9 @@ func (fb *FritzBox) invokeDeviceService(deviceInfo *deviceInfo, service *tr64Des
 	return nil
 }
 
-func (fb *FritzBox) postSoapActionRequest(endpoint string, action string, requestBody string, authentication string) (*http.Response, error) {
-	if fb.Debug {
-		fb.Log.Infof("Invoking SOAP action %s on endpoint %s ...", action, endpoint)
+func (plugin *FritzBox) postSoapActionRequest(endpoint string, action string, requestBody string, authentication string) (*http.Response, error) {
+	if plugin.Debug {
+		plugin.Log.Infof("Invoking SOAP action %s on endpoint %s ...", action, endpoint)
 	}
 	request, err := http.NewRequest(http.MethodPost, endpoint, strings.NewReader(requestBody))
 	if err != nil {
@@ -562,25 +556,25 @@ func (fb *FritzBox) postSoapActionRequest(endpoint string, action string, reques
 	if authentication != "" {
 		request.Header.Add("Authorization", authentication)
 	}
-	client := fb.getClient()
+	client := plugin.getClient()
 	response, err := client.Do(request)
 	if err != nil {
 		return response, err
 	}
-	if fb.Debug {
-		fb.Log.Infof("Status code: %d", response.StatusCode)
+	if plugin.Debug {
+		plugin.Log.Infof("Status code: %d", response.StatusCode)
 	}
 	return response, nil
 }
 
-func (fb *FritzBox) getCachedDigestAuthentication(deviceInfo *deviceInfo, uri string) string {
+func (plugin *FritzBox) getCachedDigestAuthentication(deviceInfo *deviceInfo, uri string) string {
 	if deviceInfo.cachedAuthentication[0] == uri {
 		return deviceInfo.cachedAuthentication[1]
 	}
 	return ""
 }
 
-func (fb *FritzBox) getDigestAuthentication(challenge *http.Response, deviceInfo *deviceInfo, uri string) (string, error) {
+func (plugin *FritzBox) getDigestAuthentication(challenge *http.Response, deviceInfo *deviceInfo, uri string) (string, error) {
 	challengeHeader := challenge.Header["Www-Authenticate"]
 	if len(challengeHeader) != 1 {
 		return "", errors.New("missing or unexpected WWW-Authenticate header in response")
@@ -598,13 +592,13 @@ func (fb *FritzBox) getDigestAuthentication(challenge *http.Response, deviceInfo
 		}
 	}
 	digestRealm := challengeValues["Digest realm"]
-	ha1 := fb.md5Hash(fmt.Sprintf("%s:%s:%s", deviceInfo.Login, digestRealm, deviceInfo.Password))
-	ha2 := fb.md5Hash(fmt.Sprintf("%s:%s", http.MethodPost, uri))
+	ha1 := plugin.md5Hash(fmt.Sprintf("%s:%s:%s", deviceInfo.Login, digestRealm, deviceInfo.Password))
+	ha2 := plugin.md5Hash(fmt.Sprintf("%s:%s", http.MethodPost, uri))
 	nonce := challengeValues["nonce"]
 	qop := challengeValues["qop"]
-	cnonce := fb.generateCNonce()
+	cnonce := plugin.generateCNonce()
 	nc := "1"
-	response := fb.md5Hash(fmt.Sprintf("%s:%s:%s:%s:%s:%s", ha1, nonce, nc, cnonce, qop, ha2))
+	response := plugin.md5Hash(fmt.Sprintf("%s:%s:%s:%s:%s:%s", ha1, nonce, nc, cnonce, qop, ha2))
 	authentication := fmt.Sprintf(`Digest username="%s", realm="%s", nonce="%s", uri="%s", cnonce="%s", nc="%v", qop="%s", response="%s"`,
 		deviceInfo.Login, digestRealm, nonce, uri, cnonce, nc, qop, response)
 	deviceInfo.cachedAuthentication[0] = uri
@@ -612,31 +606,31 @@ func (fb *FritzBox) getDigestAuthentication(challenge *http.Response, deviceInfo
 	return authentication, nil
 }
 
-func (fb *FritzBox) md5Hash(in string) string {
+func (plugin *FritzBox) md5Hash(in string) string {
 	hash := md5.New()
 	_, err := hash.Write([]byte(in))
 	if err != nil {
-		fb.Log.Error(err)
+		plugin.Log.Error(err)
 		panic(err)
 	}
 	return hex.EncodeToString(hash.Sum(nil))
 }
 
-func (fb *FritzBox) generateCNonce() string {
+func (plugin *FritzBox) generateCNonce() string {
 	cnonceBytes := make([]byte, 8)
 	_, err := io.ReadFull(rand.Reader, cnonceBytes)
 	if err != nil {
-		fb.Log.Error(err)
+		plugin.Log.Error(err)
 		panic(err)
 	}
 	return fmt.Sprintf("%016x", cnonceBytes)
 }
 
-func (fb *FritzBox) fetchDeviceInfo(rawBaseUrl string, login string, password string) (*deviceInfo, error) {
-	cachedDeviceInfo, cached := fb.deviceInfos[rawBaseUrl]
+func (plugin *FritzBox) fetchDeviceInfo(rawBaseUrl string, login string, password string) (*deviceInfo, error) {
+	cachedDeviceInfo, cached := plugin.deviceInfos[rawBaseUrl]
 	if !cached {
-		if fb.Debug {
-			fb.Log.Infof("Querying device info for: %s", rawBaseUrl)
+		if plugin.Debug {
+			plugin.Log.Infof("Querying device info for: %s", rawBaseUrl)
 		}
 		baseUrl, err := url.Parse(rawBaseUrl)
 		if err != nil {
@@ -645,14 +639,14 @@ func (fb *FritzBox) fetchDeviceInfo(rawBaseUrl string, login string, password st
 
 		var serviceInfo tr64Desc
 
-		_, err = fb.fetchXML(baseUrl, "/tr64desc.xml", &serviceInfo)
+		_, err = plugin.fetchXML(baseUrl, "/tr64desc.xml", &serviceInfo)
 		if err != nil {
 			return nil, err
 		}
 
 		var getMeshInfo bool
 
-		for _, meshMaster := range fb.GetMeshInfo {
+		for _, meshMaster := range plugin.GetMeshInfo {
 			if meshMaster == baseUrl.Hostname() {
 				getMeshInfo = true
 				break
@@ -664,21 +658,21 @@ func (fb *FritzBox) fetchDeviceInfo(rawBaseUrl string, login string, password st
 			Password:    password,
 			GetMeshInfo: getMeshInfo,
 			ServiceInfo: &serviceInfo}
-		fb.deviceInfos[rawBaseUrl] = cachedDeviceInfo
+		plugin.deviceInfos[rawBaseUrl] = cachedDeviceInfo
 	}
 	return cachedDeviceInfo, nil
 }
 
-func (fb *FritzBox) fetchXML(baseUrl *url.URL, path string, v interface{}) (*url.URL, error) {
+func (plugin *FritzBox) fetchXML(baseUrl *url.URL, path string, v interface{}) (*url.URL, error) {
 	pathUrl, err := url.Parse(path)
 	if err != nil {
 		return nil, err
 	}
 	xmlUrl := baseUrl.ResolveReference(pathUrl)
-	if fb.Debug {
-		fb.Log.Infof("Fetching XML from: %s", xmlUrl)
+	if plugin.Debug {
+		plugin.Log.Infof("Fetching XML from: %s", xmlUrl)
 	}
-	client := fb.getClient()
+	client := plugin.getClient()
 	response, err := client.Get(xmlUrl.String())
 	if err != nil {
 		return xmlUrl, err
@@ -687,16 +681,16 @@ func (fb *FritzBox) fetchXML(baseUrl *url.URL, path string, v interface{}) (*url
 	return xmlUrl, xml.NewDecoder(response.Body).Decode(v)
 }
 
-func (fb *FritzBox) fetchJSON(baseUrl *url.URL, path string, v interface{}) (*url.URL, error) {
+func (plugin *FritzBox) fetchJSON(baseUrl *url.URL, path string, v interface{}) (*url.URL, error) {
 	pathUrl, err := url.Parse(path)
 	if err != nil {
 		return nil, err
 	}
 	jsonUrl := baseUrl.ResolveReference(pathUrl)
-	if fb.Debug {
-		fb.Log.Infof("Fetching JSON from: %s", jsonUrl)
+	if plugin.Debug {
+		plugin.Log.Infof("Fetching JSON from: %s", jsonUrl)
 	}
-	client := fb.getClient()
+	client := plugin.getClient()
 	response, err := client.Get(jsonUrl.String())
 	if err != nil {
 		return jsonUrl, err
@@ -705,17 +699,17 @@ func (fb *FritzBox) fetchJSON(baseUrl *url.URL, path string, v interface{}) (*ur
 	return jsonUrl, json.NewDecoder(response.Body).Decode(v)
 }
 
-func (fb *FritzBox) getClient() *http.Client {
-	if fb.cachedClient == nil {
+func (plugin *FritzBox) getClient() *http.Client {
+	if plugin.cachedClient == nil {
 		transport := &http.Transport{
-			ResponseHeaderTimeout: time.Duration(fb.Timeout) * time.Second,
+			ResponseHeaderTimeout: time.Duration(plugin.Timeout) * time.Second,
 		}
-		fb.cachedClient = &http.Client{
+		plugin.cachedClient = &http.Client{
 			Transport: transport,
-			Timeout:   time.Duration(fb.Timeout) * time.Second,
+			Timeout:   time.Duration(plugin.Timeout) * time.Second,
 		}
 	}
-	return fb.cachedClient
+	return plugin.cachedClient
 }
 
 func init() {

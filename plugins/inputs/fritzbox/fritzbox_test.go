@@ -5,6 +5,7 @@
 // This software may be modified and distributed under the terms
 // of the MIT license.  See the LICENSE file for details.
 //
+
 package fritzbox
 
 import (
@@ -23,19 +24,19 @@ import (
 )
 
 func TestInit(t *testing.T) {
-	fb := NewFritzBox()
-	require.NotNil(t, fb)
+	plugin := NewFritzBox()
+	require.NotNil(t, plugin)
 }
 
 func TestSampleConfig(t *testing.T) {
-	fb := NewFritzBox()
-	sampleConfig := fb.SampleConfig()
+	plugin := NewFritzBox()
+	sampleConfig := plugin.SampleConfig()
 	require.NotNil(t, sampleConfig)
 }
 
 func TestDescription(t *testing.T) {
-	fb := NewFritzBox()
-	description := fb.Description()
+	plugin := NewFritzBox()
+	description := plugin.Description()
 	require.NotNil(t, description)
 }
 
@@ -45,15 +46,15 @@ func TestGather1(t *testing.T) {
 	defer testServer.Close()
 	testServerURL, err := url.Parse(testServer.URL)
 	require.NoError(t, err)
-	fb := NewFritzBox()
-	fb.Devices = [][]string{{testServer.URL, "user", "secret"}}
-	fb.GetMeshInfo = []string{testServerURL.Hostname()}
-	fb.Log = createDummyLogger()
-	fb.Debug = testServerHandler.Debug
+	plugin := NewFritzBox()
+	plugin.Devices = [][]string{{testServer.URL, "user", "secret"}}
+	plugin.GetMeshInfo = []string{testServerURL.Hostname()}
+	plugin.Log = createDummyLogger()
+	plugin.Debug = testServerHandler.Debug
 
 	var a testutil.Accumulator
 
-	require.NoError(t, a.GatherError(fb.Gather))
+	require.NoError(t, a.GatherError(plugin.Gather))
 	require.True(t, a.HasMeasurement("fritzbox_device"))
 	require.True(t, a.HasMeasurement("fritzbox_wlan"))
 	require.True(t, a.HasMeasurement("fritzbox_wan"))
