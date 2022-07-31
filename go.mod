@@ -1,4 +1,4 @@
-module github.com/hdecarne/fritzbox-telegraf-plugin
+module github.com/hdecarne-github/fritzbox-telegraf-plugin
 
 go 1.16
 
