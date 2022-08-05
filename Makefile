@@ -48,7 +48,7 @@ staticcheck: testdeps
 lint: vet staticcheck
 
 test:
-	go test -v -covermode=atomic -coverprofile=coverage.out ./...
+	go test -v -covermode=atomic -coverprofile=build/coverage.out ./...
 
 check: test lint
 
