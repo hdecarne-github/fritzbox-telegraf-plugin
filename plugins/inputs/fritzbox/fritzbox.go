@@ -10,6 +10,7 @@ package fritzbox
 import (
 	"crypto/md5"
 	"crypto/rand"
+	"crypto/tls"
 	"encoding/hex"
 	"encoding/json"
 	"encoding/xml"
@@ -60,6 +61,7 @@ func (s *tr64DescDeviceService) ShortServiceId() string {
 type FritzBox struct {
 	Devices        [][]string `toml:"devices"`
 	Timeout        int        `toml:"timeout"`
+	TLSSkipVerify  bool       `toml:"tls_skip_verify"`
 	GetDeviceInfo  bool       `toml:"get_device_info"`
 	GetWLANInfo    bool       `toml:"get_wlan_info"`
 	GetWANInfo     bool       `toml:"get_wan_info"`
@@ -97,6 +99,8 @@ func (plugin *FritzBox) SampleConfig() string {
   devices = [["http://fritz.box:49000", "", ""]]
   ## The http timeout to use (in seconds)
   # timeout = 5
+  ## Skip TLS verification (insecure)
+  # tls_skip_verify = false
   ## Process Device services (if found)
   # get_device_info = true
   ## Process WLAN services (if found)
@@ -702,6 +706,7 @@ func (plugin *FritzBox) getClient() *http.Client {
 	if plugin.cachedClient == nil {
 		transport := &http.Transport{
 			ResponseHeaderTimeout: time.Duration(plugin.Timeout) * time.Second,
+			TLSClientConfig:       &tls.Config{InsecureSkipVerify: plugin.TLSSkipVerify},
 		}
 		plugin.cachedClient = &http.Client{
 			Transport: transport,
