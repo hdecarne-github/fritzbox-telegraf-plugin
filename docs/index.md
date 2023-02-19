@@ -19,6 +19,8 @@ To use it you have to create a plugin specific config file (e.g. /etc/telegraf/f
   devices = [["http://fritz.box:49000", "", ""]]
   ## The http timeout to use (in seconds)
   # timeout = 5
+  ## Skip TLS verification (insecure)
+  # tls_skip_verify = false
   ## Process Device services (if found)
   # get_device_info = true
   ## Process WLAN services (if found)
