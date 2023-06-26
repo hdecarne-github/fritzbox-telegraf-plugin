@@ -60,6 +60,7 @@ func TestGather1(t *testing.T) {
 	require.True(t, a.HasMeasurement("fritzbox_dsl"))
 	require.True(t, a.HasMeasurement("fritzbox_ppp"))
 	require.True(t, a.HasMeasurement("fritzbox_mesh"))
+	require.True(t, a.HasMeasurement("fritzbox_mesh_client"))
 }
 
 func createDummyLogger() *dummyLogger {
@@ -705,6 +706,17 @@ const testHostsMeshList = `
 							"max_data_rate_tx": 216000,
 							"cur_data_rate_rx": 216000,
 							"cur_data_rate_tx": 216000
+						},
+						{
+							"state": "CONNECTED",
+							"node_1_uid": "n-1",
+							"node_2_uid": "n-133",
+							"node_interface_1_uid": "ni-114",
+							"node_interface_2_uid": "ni-134",
+							"max_data_rate_rx": 72200,
+							"max_data_rate_tx": 72200,
+							"cur_data_rate_rx": 72000,
+							"cur_data_rate_tx": 72000
 						}
 					]
 				},
@@ -767,6 +779,32 @@ const testHostsMeshList = `
 							"max_data_rate_tx": 216000,
 							"cur_data_rate_rx": 216000,
 							"cur_data_rate_tx": 216000
+						}
+					]
+				}
+			]
+		},
+		{
+			"uid": "n-133",
+			"device_name": "unknown6",
+			"is_meshed": false,
+			"mesh_role": "unknown",
+			"node_interfaces": [
+				{
+					"uid": "ni-134",
+					"name": "",
+					"type": "WLAN",
+					"node_links": [
+						{
+							"state": "CONNECTED",
+							"node_1_uid": "n-1",
+							"node_2_uid": "n-133",
+							"node_interface_1_uid": "ni-114",
+							"node_interface_2_uid": "ni-134",
+							"max_data_rate_rx": 72200,
+							"max_data_rate_tx": 72200,
+							"cur_data_rate_rx": 72000,
+							"cur_data_rate_tx": 72000
 						}
 					]
 				}
