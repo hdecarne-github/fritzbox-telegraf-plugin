@@ -464,7 +464,7 @@ func (plugin *FritzBox) processHostsMeshService(a telegraf.Accumulator, deviceIn
 			tags["fritz_service"] = service.ShortServiceId()
 			tags["fritz_mesh_client_name"] = clientPath.node.DeviceName
 			tags["fritz_mesh_client_peer"] = peer.node.DeviceName
-			tags["fritz_mesh_client_link"] = clientPath.node.DeviceName + ":" + peer.nodeInterface.Name
+			tags["fritz_mesh_client_link"] = peer.node.DeviceName + ":" + peer.nodeInterface.Name
 			fields := make(map[string]interface{})
 			clientDataRates := clientPath.getDataRates()
 			fields["max_data_rate_rx"] = clientDataRates[0]
