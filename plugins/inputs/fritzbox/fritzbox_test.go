@@ -1,6 +1,6 @@
 // fritzbox_test.go
 //
-// Copyright (C) 2022 Holger de Carne
+// # Copyright (C) 2022-2023 Holger de Carne
 //
 // This software may be modified and distributed under the terms
 // of the MIT license.  See the LICENSE file for details.
@@ -47,6 +47,7 @@ func TestGather1(t *testing.T) {
 	plugin := NewFritzBox()
 	plugin.Devices = [][]string{{testServer.URL, "user", "secret"}}
 	plugin.GetMeshInfo = []string{testServerURL.Hostname()}
+	plugin.GetMeshClients = true
 	plugin.Log = createDummyLogger()
 	plugin.Debug = testServerHandler.Debug
 
@@ -681,7 +682,7 @@ func (tsh *testServerHandler) serveHosts(out http.ResponseWriter, request *http.
 
 const testHostsMeshList = `
 {
-	"schema_version": "4.7",
+	"schema_version": "4.11",
 	"nodes": [
 		{
 			"uid": "n-1",
@@ -689,23 +690,61 @@ const testHostsMeshList = `
 			"is_meshed": true,
 			"mesh_role": "master",
 			"node_interfaces": [
-
+				{
+					"uid": "ni-114",
+					"name": "AP:2G:0",
+					"type": "WLAN",
+					"node_links": [
+						{
+							"state": "CONNECTED",
+							"node_1_uid": "n-1",
+							"node_2_uid": "n-30",
+							"node_interface_1_uid": "ni-114",
+							"node_interface_2_uid": "ni-221",
+							"max_data_rate_rx": 216000,
+							"max_data_rate_tx": 216000,
+							"cur_data_rate_rx": 216000,
+							"cur_data_rate_tx": 216000
+						}
+					]
+				},
+				{
+					"uid": "ni-115",
+					"name": "AP:5G:0",
+					"type": "WLAN",
+					"node_links": [
+						{
+							"state": "CONNECTED",
+							"node_1_uid": "n-1",
+							"node_2_uid": "n-30",
+							"node_interface_1_uid": "ni-115",
+							"node_interface_2_uid": "ni-220",
+							"max_data_rate_rx": 1300000,
+							"max_data_rate_tx": 1300000,
+							"cur_data_rate_rx": 1300000,
+							"cur_data_rate_tx": 975000
+						}
+					]
+				}
 			]
 		},
 		{
-			"uid": "n-145",
+			"uid": "n-30",
 			"device_name": "slave1",
 			"is_meshed": true,
 			"mesh_role": "slave",
 			"node_interfaces": [
 				{
+					"uid": "ni-220",
 					"name": "UPLINK:5G:0",
 					"type": "WLAN",
 					"node_links": [
 						{
 							"state": "CONNECTED",
 							"node_1_uid": "n-1",
-							"node_2_uid": "n-145",
+							"node_2_uid": "n-30",
+							"node_interface_1_uid": "ni-115",
+							"node_interface_2_uid": "ni-220",
 							"max_data_rate_rx": 1300000,
 							"max_data_rate_tx": 1300000,
 							"cur_data_rate_rx": 1300000,
@@ -714,13 +753,16 @@ const testHostsMeshList = `
 					]
 				},
 				{
+					"uid": "ni-221",
 					"name": "UPLINK:2G:0",
 					"type": "WLAN",
 					"node_links": [
 						{
 							"state": "CONNECTED",
 							"node_1_uid": "n-1",
-							"node_2_uid": "n-145",
+							"node_2_uid": "n-30",
+							"node_interface_1_uid": "ni-114",
+							"node_interface_2_uid": "ni-221",
 							"max_data_rate_rx": 216000,
 							"max_data_rate_tx": 216000,
 							"cur_data_rate_rx": 216000,

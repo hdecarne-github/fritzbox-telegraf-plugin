@@ -1,0 +1,578 @@
+{
+	"schema_version": "4.11",
+	"nodes": [
+		{
+			"uid": "n-1",
+			"device_name": "master1",
+			"is_meshed": true,
+			"mesh_role": "master",
+			"node_interfaces": [
+				{
+					"uid": "ni-5",
+					"name": "LANBridge",
+					"type": "LAN",
+					"node_links": []
+				},
+				{
+					"uid": "ni-16",
+					"name": "LAN:1",
+					"type": "LAN",
+					"node_links": [
+						{
+							"state": "CONNECTED",
+							"node_1_uid": "n-1",
+							"node_2_uid": "n-125",
+							"node_interface_1_uid": "ni-16",
+							"node_interface_2_uid": "ni-126",
+							"max_data_rate_rx": 1000004,
+							"max_data_rate_tx": 1000003,
+							"cur_data_rate_rx": 1000002,
+							"cur_data_rate_tx": 1000001
+						}
+					]
+				},
+				{
+					"uid": "ni-20",
+					"name": "LAN:2",
+					"type": "LAN",
+					"node_links": [
+						{
+							"state": "CONNECTED",
+							"node_1_uid": "n-1",
+							"node_2_uid": "n-96",
+							"node_interface_1_uid": "ni-20",
+							"node_interface_2_uid": "ni-97",
+							"max_data_rate_rx": 1000000,
+							"max_data_rate_tx": 1000000,
+							"cur_data_rate_rx": 1000000,
+							"cur_data_rate_tx": 1000000
+						}
+					]
+				},
+				{
+					"uid": "ni-21",
+					"name": "LAN:3",
+					"type": "LAN",
+					"node_links": []
+				},
+				{
+					"uid": "ni-22",
+					"name": "LAN:4",
+					"type": "LAN",
+					"node_links": []
+				},
+				{
+					"uid": "ni-23",
+					"name": "WAN:1",
+					"type": "LAN",
+					"node_links": []
+				},
+				{
+					"uid": "ni-24",
+					"name": "AP:2G:0",
+					"type": "WLAN",
+					"node_links": []
+				},
+				{
+					"uid": "ni-26",
+					"name": "AP:5G:0",
+					"type": "WLAN",
+					"node_links": []
+				}
+			]
+		},
+		{
+			"uid": "n-18",
+			"device_name": "slave1",
+			"is_meshed": true,
+			"mesh_role": "slave",
+			"node_interfaces": [
+				{
+					"uid": "ni-63",
+					"name": "LAN:1",
+					"type": "LAN",
+					"node_links": [
+						{
+							"state": "CONNECTED",
+							"node_1_uid": "n-18",
+							"node_2_uid": "n-125",
+							"node_interface_1_uid": "ni-63",
+							"node_interface_2_uid": "ni-132",
+							"max_data_rate_rx": 0,
+							"max_data_rate_tx": 0,
+							"cur_data_rate_rx": 0,
+							"cur_data_rate_tx": 0
+						}
+					]
+				},
+				{
+					"uid": "ni-65",
+					"name": "LANBridge",
+					"type": "LAN",
+					"node_links": []
+				},
+				{
+					"uid": "ni-66",
+					"name": "AP:5G:0",
+					"type": "WLAN",
+					"node_links": [
+						{
+							"state": "DISCONNECTED",
+							"node_1_uid": "n-18",
+							"node_2_uid": "n-68",
+							"node_interface_1_uid": "ni-66",
+							"node_interface_2_uid": "ni-69",
+							"max_data_rate_rx": 0,
+							"max_data_rate_tx": 0,
+							"cur_data_rate_rx": 0,
+							"cur_data_rate_tx": 0
+						}
+					]
+				},
+				{
+					"uid": "ni-67",
+					"name": "AP:2G:0",
+					"type": "WLAN",
+					"node_links": [
+						{
+							"state": "CONNECTED",
+							"node_1_uid": "n-18",
+							"node_2_uid": "n-68",
+							"node_interface_1_uid": "ni-67",
+							"node_interface_2_uid": "ni-69",
+							"max_data_rate_rx": 192000,
+							"max_data_rate_tx": 192000,
+							"cur_data_rate_rx": 173000,
+							"cur_data_rate_tx": 173000
+						},
+						{
+							"state": "DISCONNECTED",
+							"node_1_uid": "n-18",
+							"node_2_uid": "n-85",
+							"node_interface_1_uid": "ni-67",
+							"node_interface_2_uid": "ni-86",
+							"max_data_rate_rx": 0,
+							"max_data_rate_tx": 0,
+							"cur_data_rate_rx": 0,
+							"cur_data_rate_tx": 0
+						}
+					]
+				}
+			]
+		},
+		{
+			"uid": "n-25",
+			"device_name": "slave2",
+			"is_meshed": true,
+			"mesh_role": "slave",
+			"node_interfaces": [
+				{
+					"uid": "ni-75",
+					"name": "LAN:3",
+					"type": "LAN",
+					"node_links": [
+						{
+							"state": "CONNECTED",
+							"node_1_uid": "n-25",
+							"node_2_uid": "n-83",
+							"node_interface_1_uid": "ni-75",
+							"node_interface_2_uid": "ni-84",
+							"max_data_rate_rx": 100000,
+							"max_data_rate_tx": 100000,
+							"cur_data_rate_rx": 0,
+							"cur_data_rate_tx": 0
+						}
+					]
+				},
+				{
+					"uid": "ni-77",
+					"name": "LAN:4",
+					"type": "LAN",
+					"node_links": []
+				},
+				{
+					"uid": "ni-78",
+					"name": "LANBridge",
+					"type": "LAN",
+					"node_links": []
+				},
+				{
+					"uid": "ni-79",
+					"name": "LAN:1",
+					"type": "LAN",
+					"node_links": [
+						{
+							"state": "CONNECTED",
+							"node_1_uid": "n-25",
+							"node_2_uid": "n-125",
+							"node_interface_1_uid": "ni-79",
+							"node_interface_2_uid": "ni-130",
+							"max_data_rate_rx": 0,
+							"max_data_rate_tx": 0,
+							"cur_data_rate_rx": 0,
+							"cur_data_rate_tx": 0
+						}
+					]
+				},
+				{
+					"uid": "ni-80",
+					"name": "LAN:2",
+					"type": "LAN",
+					"node_links": []
+				},
+				{
+					"uid": "ni-81",
+					"name": "AP:5G:0",
+					"type": "WLAN",
+					"node_links": [
+						{
+							"state": "CONNECTED",
+							"node_1_uid": "n-25",
+							"node_2_uid": "n-85",
+							"node_interface_1_uid": "ni-81",
+							"node_interface_2_uid": "ni-86",
+							"max_data_rate_rx": 866000,
+							"max_data_rate_tx": 866000,
+							"cur_data_rate_rx": 130000,
+							"cur_data_rate_tx": 130000
+						}
+					]
+				},
+				{
+					"uid": "ni-82",
+					"name": "AP:2G:0",
+					"type": "WLAN",
+					"node_links": [
+						{
+							"state": "DISCONNECTED",
+							"node_1_uid": "n-25",
+							"node_2_uid": "n-85",
+							"node_interface_1_uid": "ni-82",
+							"node_interface_2_uid": "ni-86",
+							"max_data_rate_rx": 0,
+							"max_data_rate_tx": 0,
+							"cur_data_rate_rx": 0,
+							"cur_data_rate_tx": 0
+						},
+						{
+							"state": "CONNECTED",
+							"node_1_uid": "n-25",
+							"node_2_uid": "n-70",
+							"node_interface_1_uid": "ni-82",
+							"node_interface_2_uid": "ni-71",
+							"max_data_rate_rx": 72000,
+							"max_data_rate_tx": 72000,
+							"cur_data_rate_rx": 1000,
+							"cur_data_rate_tx": 1000
+						}
+					]
+				}
+			]
+		},
+		{
+			"uid": "n-68",
+			"device_name": "unknown1",
+			"is_meshed": false,
+			"mesh_role": "unknown",
+			"node_interfaces": [
+				{
+					"uid": "ni-69",
+					"name": "",
+					"type": "WLAN",
+					"node_links": [
+						{
+							"state": "DISCONNECTED",
+							"node_1_uid": "n-18",
+							"node_2_uid": "n-68",
+							"node_interface_1_uid": "ni-66",
+							"node_interface_2_uid": "ni-69",
+							"max_data_rate_rx": 0,
+							"max_data_rate_tx": 0,
+							"cur_data_rate_rx": 0,
+							"cur_data_rate_tx": 0
+						},
+						{
+							"state": "CONNECTED",
+							"node_1_uid": "n-18",
+							"node_2_uid": "n-68",
+							"node_interface_1_uid": "ni-67",
+							"node_interface_2_uid": "ni-69",
+							"max_data_rate_rx": 192000,
+							"max_data_rate_tx": 192000,
+							"cur_data_rate_rx": 173000,
+							"cur_data_rate_tx": 173000
+						}
+					]
+				}
+			]
+		},
+		{
+			"uid": "n-70",
+			"device_name": "unknown2",
+			"is_meshed": false,
+			"mesh_role": "unknown",
+			"node_interfaces": [
+				{
+					"uid": "ni-71",
+					"name": "",
+					"type": "WLAN",
+					"node_links": [
+						{
+							"state": "CONNECTED",
+							"node_1_uid": "n-25",
+							"node_2_uid": "n-70",
+							"node_interface_1_uid": "ni-82",
+							"node_interface_2_uid": "ni-71",
+							"max_data_rate_rx": 72000,
+							"max_data_rate_tx": 72000,
+							"cur_data_rate_rx": 1000,
+							"cur_data_rate_tx": 1000
+						}
+					]
+				}
+			]
+		},
+		{
+			"uid": "n-83",
+			"device_name": "unknown3",
+			"is_meshed": false,
+			"mesh_role": "unknown",
+			"node_interfaces": [
+				{
+					"uid": "ni-84",
+					"name": "",
+					"type": "LAN",
+					"node_links": [
+						{
+							"state": "CONNECTED",
+							"node_1_uid": "n-25",
+							"node_2_uid": "n-83",
+							"node_interface_1_uid": "ni-75",
+							"node_interface_2_uid": "ni-84",
+							"max_data_rate_rx": 100000,
+							"max_data_rate_tx": 100000,
+							"cur_data_rate_rx": 0,
+							"cur_data_rate_tx": 0
+						}
+					]
+				}
+			]
+		},
+		{
+			"uid": "n-85",
+			"device_name": "unknown4",
+			"is_meshed": false,
+			"mesh_role": "unknown",
+			"node_interfaces": [
+				{
+					"uid": "ni-86",
+					"name": "",
+					"type": "WLAN",
+					"node_links": [
+						{
+							"state": "CONNECTED",
+							"node_1_uid": "n-25",
+							"node_2_uid": "n-85",
+							"node_interface_1_uid": "ni-81",
+							"node_interface_2_uid": "ni-86",
+							"max_data_rate_rx": 866000,
+							"max_data_rate_tx": 866000,
+							"cur_data_rate_rx": 130000,
+							"cur_data_rate_tx": 130000
+						},
+						{
+							"state": "DISCONNECTED",
+							"node_1_uid": "n-25",
+							"node_2_uid": "n-85",
+							"node_interface_1_uid": "ni-82",
+							"node_interface_2_uid": "ni-86",
+							"max_data_rate_rx": 0,
+							"max_data_rate_tx": 0,
+							"cur_data_rate_rx": 0,
+							"cur_data_rate_tx": 0
+						},
+						{
+							"state": "DISCONNECTED",
+							"node_1_uid": "n-18",
+							"node_2_uid": "n-85",
+							"node_interface_1_uid": "ni-67",
+							"node_interface_2_uid": "ni-86",
+							"max_data_rate_rx": 0,
+							"max_data_rate_tx": 0,
+							"cur_data_rate_rx": 0,
+							"cur_data_rate_tx": 0
+						}
+					]
+				}
+			]
+		},
+		{
+			"uid": "n-96",
+			"device_name": "unknown5",
+			"is_meshed": false,
+			"mesh_role": "unknown",
+			"node_interfaces": [
+				{
+					"uid": "ni-97",
+					"name": "",
+					"type": "LAN",
+					"node_links": [
+						{
+							"state": "CONNECTED",
+							"node_1_uid": "n-1",
+							"node_2_uid": "n-96",
+							"node_interface_1_uid": "ni-20",
+							"node_interface_2_uid": "ni-97",
+							"max_data_rate_rx": 1000000,
+							"max_data_rate_tx": 1000000,
+							"cur_data_rate_rx": 1000000,
+							"cur_data_rate_tx": 1000000
+						}
+					]
+				}
+			]
+		},
+		{
+			"uid": "n-104",
+			"device_name": "unknown6",
+			"is_meshed": false,
+			"mesh_role": "unknown",
+			"node_interfaces": [
+				{
+					"uid": "ni-105",
+					"name": "",
+					"type": "LAN",
+					"node_links": [
+						{
+							"state": "CONNECTED",
+							"node_1_uid": "n-104",
+							"node_2_uid": "n-125",
+							"node_interface_1_uid": "ni-105",
+							"node_interface_2_uid": "ni-128",
+							"max_data_rate_rx": 0,
+							"max_data_rate_tx": 0,
+							"cur_data_rate_rx": 0,
+							"cur_data_rate_tx": 0
+						}
+					]
+				},
+				{
+					"uid": "ni-27",
+					"name": "LAN:1",
+					"type": "LAN",
+					"node_links": [
+						{
+							"state": "CONNECTED",
+							"node_1_uid": "n-104",
+							"node_2_uid": "n-125",
+							"node_interface_1_uid": "ni-27",
+							"node_interface_2_uid": "ni-28",
+							"max_data_rate_rx": 0,
+							"max_data_rate_tx": 0,
+							"cur_data_rate_rx": 0,
+							"cur_data_rate_tx": 0
+						}
+					]
+				}
+			]
+		},
+		{
+			"uid": "n-125",
+			"device_name": "unknown7",
+			"is_meshed": false,
+			"mesh_role": "unknown",
+			"node_interfaces": [
+				{
+					"uid": "ni-28",
+					"name": "",
+					"type": "LAN",
+					"node_links": [
+						{
+							"state": "CONNECTED",
+							"node_1_uid": "n-104",
+							"node_2_uid": "n-125",
+							"node_interface_1_uid": "ni-27",
+							"node_interface_2_uid": "ni-28",
+							"max_data_rate_rx": 0,
+							"max_data_rate_tx": 0,
+							"cur_data_rate_rx": 0,
+							"cur_data_rate_tx": 0
+						}
+					]
+				},
+				{
+					"uid": "ni-126",
+					"name": "",
+					"type": "LAN",
+					"node_links": [
+						{
+							"state": "CONNECTED",
+							"node_1_uid": "n-1",
+							"node_2_uid": "n-125",
+							"node_interface_1_uid": "ni-16",
+							"node_interface_2_uid": "ni-126",
+							"max_data_rate_rx": 1000000,
+							"max_data_rate_tx": 1000000,
+							"cur_data_rate_rx": 1000000,
+							"cur_data_rate_tx": 1000000
+						}
+					]
+				},
+				{
+					"uid": "ni-128",
+					"name": "",
+					"type": "LAN",
+					"node_links": [
+						{
+							"state": "CONNECTED",
+							"node_1_uid": "n-104",
+							"node_2_uid": "n-125",
+							"node_interface_1_uid": "ni-105",
+							"node_interface_2_uid": "ni-128",
+							"max_data_rate_rx": 0,
+							"max_data_rate_tx": 0,
+							"cur_data_rate_rx": 0,
+							"cur_data_rate_tx": 0
+						}
+					]
+				},
+				{
+					"uid": "ni-130",
+					"name": "",
+					"type": "LAN",
+					"node_links": [
+						{
+							"state": "CONNECTED",
+							"node_1_uid": "n-25",
+							"node_2_uid": "n-125",
+							"node_interface_1_uid": "ni-79",
+							"node_interface_2_uid": "ni-130",
+							"max_data_rate_rx": 0,
+							"max_data_rate_tx": 0,
+							"cur_data_rate_rx": 0,
+							"cur_data_rate_tx": 0
+						}
+					]
+				},
+				{
+					"uid": "ni-132",
+					"name": "",
+					"type": "LAN",
+					"node_links": [
+						{
+							"state": "CONNECTED",
+							"node_1_uid": "n-18",
+							"node_2_uid": "n-125",
+							"node_interface_1_uid": "ni-63",
+							"node_interface_2_uid": "ni-132",
+							"max_data_rate_rx": 0,
+							"max_data_rate_tx": 0,
+							"cur_data_rate_rx": 0,
+							"cur_data_rate_tx": 0
+						}
+					]
+				}
+			]
+		}
+	]
+}

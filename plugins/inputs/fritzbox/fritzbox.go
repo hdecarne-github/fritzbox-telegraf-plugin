@@ -1,6 +1,6 @@
 // fritzbox.go
 //
-// Copyright (C) 2022 Holger de Carne
+// Copyright (C) 2022-2023 Holger de Carne
 //
 // This software may be modified and distributed under the terms
 // of the MIT license.  See the LICENSE file for details.
@@ -68,6 +68,7 @@ type FritzBox struct {
 	GetDSLInfo     bool       `toml:"get_dsl_info"`
 	GetPPPInfo     bool       `toml:"get_ppp_info"`
 	GetMeshInfo    []string   `toml:"get_mesh_info"`
+	GetMeshClients bool       `toml:"get_mesh_clients"`
 	FullQueryCycle int        `toml:"full_query_cycle"`
 	Debug          bool       `toml:"debug"`
 
@@ -113,6 +114,8 @@ func (plugin *FritzBox) SampleConfig() string {
   # get_ppp_info = true
   ## Process Mesh infos for selected hosts (must be one of the hosts defined in devices)
   # get_mesh_info = []
+  ## Get all mesh clients from mesh infos
+  # get_mesh_clients = false
   ## The cycle count, at which low-traffic stats are queried
   # full_query_cycle = 6
   ## Enable debug output
@@ -420,35 +423,6 @@ func (plugin *FritzBox) processPPPConnectionService(a telegraf.Accumulator, devi
 	return nil
 }
 
-type meshList struct {
-	SchemaVersion string         `json:"schema_version"`
-	Nodes         []meshListNode `json:"nodes"`
-}
-
-type meshListNode struct {
-	Uid            string                  `json:"uid"`
-	DeviceName     string                  `json:"device_name"`
-	IsMeshed       bool                    `json:"is_meshed"`
-	MeshRole       string                  `json:"mesh_role"`
-	NodeInterfaces []meshListNodeInterface `json:"node_interfaces"`
-}
-
-type meshListNodeInterface struct {
-	Name      string             `json:"name"`
-	Type      string             `json:"type"`
-	NodeLinks []meshListNodeLink `json:"node_links"`
-}
-
-type meshListNodeLink struct {
-	State         string `json:"state"`
-	Node1Uid      string `json:"node_1_uid"`
-	Node2Uid      string `json:"node_2_uid"`
-	MaxDataRateRx int    `json:"max_data_rate_rx"`
-	MaxDataRateTx int    `json:"max_data_rate_tx"`
-	CurDataRateRx int    `json:"cur_data_rate_rx"`
-	CurDataRateTx int    `json:"cur_data_rate_tx"`
-}
-
 func (plugin *FritzBox) processHostsMeshService(a telegraf.Accumulator, deviceInfo *deviceInfo, service *tr64DescDeviceService) error {
 	meshListPath := struct {
 		MeshListPath string `xml:"Body>X_AVM-DE_GetMeshListPathResponse>NewX_AVM-DE_MeshListPath"`
@@ -465,36 +439,39 @@ func (plugin *FritzBox) processHostsMeshService(a telegraf.Accumulator, deviceIn
 		return err
 	}
 
-	var masterNode *meshListNode
-
-	for _, node := range meshList.Nodes {
-		if node.IsMeshed && node.MeshRole == "master" {
-			masterNode = &node
-			break
-		}
+	masterSlavePaths := meshList.getMasterSlavePaths()
+	for _, masterSlavePath := range masterSlavePaths {
+		tags := make(map[string]string)
+		tags["fritz_device"] = deviceInfo.BaseUrl.Hostname()
+		tags["fritz_service"] = service.ShortServiceId()
+		tags["fritz_mesh_node_name"] = masterSlavePath.node.DeviceName
+		tags["fritz_mesh_node_type"] = masterSlavePath.nodeInterface.Type
+		tags["fritz_mesh_node_link"] = masterSlavePath.node.DeviceName + ":" + masterSlavePath.nodeInterface.Type + ":" + masterSlavePath.nodeInterface.Name
+		fields := make(map[string]interface{})
+		masterSlaveDataRates := masterSlavePath.getRoot().getDataRates()
+		fields["max_data_rate_rx"] = masterSlaveDataRates[0]
+		fields["max_data_rate_tx"] = masterSlaveDataRates[1]
+		fields["cur_data_rate_rx"] = masterSlaveDataRates[2]
+		fields["cur_data_rate_tx"] = masterSlaveDataRates[3]
+		a.AddCounter("fritzbox_mesh", fields, tags)
 	}
-	if masterNode != nil {
-		for _, node := range meshList.Nodes {
-			if node.IsMeshed && node.MeshRole == "slave" {
-				for _, nodeInterface := range node.NodeInterfaces {
-					for _, nodeLink := range nodeInterface.NodeLinks {
-						if nodeLink.State == "CONNECTED" && nodeLink.Node1Uid == masterNode.Uid {
-							tags := make(map[string]string)
-							tags["fritz_device"] = deviceInfo.BaseUrl.Hostname()
-							tags["fritz_service"] = service.ShortServiceId()
-							tags["fritz_mesh_node_name"] = node.DeviceName
-							tags["fritz_mesh_node_type"] = nodeInterface.Type
-							tags["fritz_mesh_node_link"] = node.DeviceName + ":" + nodeInterface.Type + ":" + nodeInterface.Name
-							fields := make(map[string]interface{})
-							fields["max_data_rate_rx"] = nodeLink.MaxDataRateRx
-							fields["max_data_rate_tx"] = nodeLink.MaxDataRateTx
-							fields["cur_data_rate_rx"] = nodeLink.CurDataRateRx
-							fields["cur_data_rate_tx"] = nodeLink.CurDataRateTx
-							a.AddCounter("fritzbox_mesh", fields, tags)
-						}
-					}
-				}
-			}
+	if plugin.GetMeshClients {
+		clientPaths := meshList.getClientPaths()
+		for _, clientPath := range clientPaths {
+			tags := make(map[string]string)
+			peer := clientPath.getRoot()
+			tags["fritz_device"] = deviceInfo.BaseUrl.Hostname()
+			tags["fritz_service"] = service.ShortServiceId()
+			tags["fritz_mesh_client_name"] = clientPath.node.DeviceName
+			tags["fritz_mesh_client_peer"] = peer.node.DeviceName
+			tags["fritz_mesh_client_link"] = peer.nodeInterface.Name
+			fields := make(map[string]interface{})
+			clientDataRates := clientPath.getDataRates()
+			fields["max_data_rate_rx"] = clientDataRates[0]
+			fields["max_data_rate_tx"] = clientDataRates[1]
+			fields["cur_data_rate_rx"] = clientDataRates[2]
+			fields["cur_data_rate_tx"] = clientDataRates[3]
+			a.AddCounter("fritzbox_mesh_client", fields, tags)
 		}
 	}
 	return nil
