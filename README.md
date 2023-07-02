@@ -10,7 +10,7 @@ To install the plugin you have to download a suitable [release archive](https://
 ```
 make
 ```
-To build the plugin, Go version 1.16 or higher is required. The resulting plugin binary will be written to **./build/bin**.
+To build the plugin, Go version 1.16 or higher is required. The resulting plugin binary will be written to `./build/bin`.
 Copy the either extracted or built plugin binary to a location of your choice (e.g. /usr/local/bin/telegraf/).
 
 ### Configuration
@@ -46,16 +46,16 @@ To use it you have to create a plugin specific config file (e.g. /etc/telegraf/f
   ## Enable debug output
   # debug = false
 ```
-The most important setting is the **devices** line. It defines the base URLs of devices to query as well as the credentials (login + password) to use for authentication. At least one device has to be defined.
-The flags (**get_*_info**) control which stats are polled and are described in the sections below.
+The most important setting is the `devices` line. It defines the base URLs of devices to query as well as the credentials (login + password) to use for authentication. At least one device has to be defined.
+The flags (`get_*_info`) control which stats are polled and are described in the sections below.
 
-To enable the plugin within your Telegraf instance, add the following section to your **telegraf.conf**
+To enable the plugin within your Telegraf instance, add the following section to your `telegraf.conf`
 ```toml
 [[inputs.execd]]
   command = ["/usr/local/bin/telegraf/fritzbox-telegraf-plugin", "-config", "/etc/telegraf/fritzbox.conf", "-poll_interval", "10s"]
   signal = "none"
 ```
-The polling interval defined here interacts with the **full_query_cycle** option above. The plugin gathers it's stats every 10s. Every 6th run (60s) it performs all configured queries. In between only the WAN stats are queried. By adapting the two options **poll_interval** and **full_query_cycle** you control the update frequency as well as the resulting system load.
+The polling interval defined here interacts with the `full_query_cycle` option above. The plugin gathers it's stats every 10s. Every 6th run (60s) it performs all configured queries. In between only the WAN stats are queried. By adapting the two options `poll_interval` and `full_query_cycle` you control the update frequency as well as the resulting system load.
 
 #### Device Info (get_device_info)
 Reports the `fritzbox_device` measurement:
