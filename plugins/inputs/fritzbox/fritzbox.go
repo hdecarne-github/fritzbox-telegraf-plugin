@@ -441,6 +441,7 @@ func (plugin *FritzBox) processHostsMeshService(a telegraf.Accumulator, deviceIn
 
 	masterSlavePaths := meshList.getMasterSlavePaths()
 	for _, masterSlavePath := range masterSlavePaths {
+		masterSlaveDataRates := masterSlavePath.getRoot().getDataRates()
 		tags := make(map[string]string)
 		tags["fritz_device"] = deviceInfo.BaseUrl.Hostname()
 		tags["fritz_service"] = service.ShortServiceId()
@@ -448,7 +449,6 @@ func (plugin *FritzBox) processHostsMeshService(a telegraf.Accumulator, deviceIn
 		tags["fritz_mesh_node_type"] = masterSlavePath.nodeInterface.Type
 		tags["fritz_mesh_node_link"] = masterSlavePath.node.DeviceName + ":" + masterSlavePath.nodeInterface.Type + ":" + masterSlavePath.nodeInterface.Name
 		fields := make(map[string]interface{})
-		masterSlaveDataRates := masterSlavePath.getRoot().getDataRates()
 		fields["max_data_rate_rx"] = masterSlaveDataRates[0]
 		fields["max_data_rate_tx"] = masterSlaveDataRates[1]
 		fields["cur_data_rate_rx"] = masterSlaveDataRates[2]
@@ -458,15 +458,16 @@ func (plugin *FritzBox) processHostsMeshService(a telegraf.Accumulator, deviceIn
 	if plugin.GetMeshClients {
 		clientPaths := meshList.getClientPaths()
 		for _, clientPath := range clientPaths {
+			clientDataRates := clientPath.getDataRates()
 			tags := make(map[string]string)
 			peer := clientPath.getRoot()
 			tags["fritz_device"] = deviceInfo.BaseUrl.Hostname()
 			tags["fritz_service"] = service.ShortServiceId()
 			tags["fritz_mesh_client_name"] = clientPath.node.DeviceName
+			tags["fritz_mesh_client_type"] = clientPath.nodeInterface.Type
 			tags["fritz_mesh_client_peer"] = peer.node.DeviceName
-			tags["fritz_mesh_client_link"] = peer.node.DeviceName + ":" + peer.nodeInterface.Name
+			tags["fritz_mesh_client_link"] = peer.node.DeviceName + ":" + peer.nodeInterface.Type + ":" + peer.nodeInterface.Name
 			fields := make(map[string]interface{})
-			clientDataRates := clientPath.getDataRates()
 			fields["max_data_rate_rx"] = clientDataRates[0]
 			fields["max_data_rate_tx"] = clientDataRates[1]
 			fields["cur_data_rate_rx"] = clientDataRates[2]
