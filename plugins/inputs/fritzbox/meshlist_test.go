@@ -34,12 +34,12 @@ func TestGetMasterSlavePaths2(t *testing.T) {
 }
 func TestGetClientPaths1(t *testing.T) {
 	meshList := loadTestMeshList(t, testMeshList1)
-	clientPaths := meshList.getClientPaths()
+	clientPaths := meshList.getClientPaths([]string{})
 	require.Equal(t, 20, len(clientPaths))
 }
 func TestGetClientPaths2(t *testing.T) {
 	meshList := loadTestMeshList(t, testMeshList2)
-	clientPaths := meshList.getClientPaths()
+	clientPaths := meshList.getClientPaths([]string{})
 	require.Equal(t, 12, len(clientPaths))
 }
 

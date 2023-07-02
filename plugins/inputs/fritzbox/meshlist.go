@@ -170,29 +170,38 @@ func (meshList *meshList) collectMasterSlavePaths(paths []*meshPath, path *meshP
 	return updatedPaths
 }
 
-func (meshList *meshList) getClientPaths() []*meshPath {
+func (meshList *meshList) getClientPaths(clientTypes []string) []*meshPath {
 	paths := make([]*meshPath, 0)
 	for clientNodeIndex, clientNode := range meshList.Nodes {
 		if !clientNode.IsMeshed {
 			for clientInterfaceIndex, clientInterface := range clientNode.NodeInterfaces {
-				for clientLinkIndex, clientLink := range clientInterface.NodeLinks {
-					if clientLink.isConnected() {
-						client := &meshPath{
-							node:          &meshList.Nodes[clientNodeIndex],
-							nodeInterface: &clientNode.NodeInterfaces[clientInterfaceIndex],
-							nodeLink:      &clientInterface.NodeLinks[clientLinkIndex],
-						}
-						peerNode := meshList.lookupNode(client.getPeerNodeUid())
-						if peerNode != nil {
-							for peerInterfaceIndex, peerInterface := range peerNode.NodeInterfaces {
-								if clientLink.isConnectedTo(&peerInterface) {
-									peer := &meshPath{
-										node:          peerNode,
-										nodeInterface: &peerNode.NodeInterfaces[peerInterfaceIndex],
-										nodeLink:      client.nodeLink,
+				includeClient := len(clientTypes) == 0
+				for _, clientType := range clientTypes {
+					if clientInterface.Type == clientType {
+						includeClient = true
+						break
+					}
+				}
+				if includeClient {
+					for clientLinkIndex, clientLink := range clientInterface.NodeLinks {
+						if clientLink.isConnected() {
+							client := &meshPath{
+								node:          &meshList.Nodes[clientNodeIndex],
+								nodeInterface: &clientNode.NodeInterfaces[clientInterfaceIndex],
+								nodeLink:      &clientInterface.NodeLinks[clientLinkIndex],
+							}
+							peerNode := meshList.lookupNode(client.getPeerNodeUid())
+							if peerNode != nil {
+								for peerInterfaceIndex, peerInterface := range peerNode.NodeInterfaces {
+									if clientLink.isConnectedTo(&peerInterface) {
+										peer := &meshPath{
+											node:          peerNode,
+											nodeInterface: &peerNode.NodeInterfaces[peerInterfaceIndex],
+											nodeLink:      client.nodeLink,
+										}
+										client.parent = peer
+										paths = append(paths, client)
 									}
-									client.parent = peer
-									paths = append(paths, client)
 								}
 							}
 						}

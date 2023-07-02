@@ -59,18 +59,19 @@ func (s *tr64DescDeviceService) ShortServiceId() string {
 }
 
 type FritzBox struct {
-	Devices        [][]string `toml:"devices"`
-	Timeout        int        `toml:"timeout"`
-	TLSSkipVerify  bool       `toml:"tls_skip_verify"`
-	GetDeviceInfo  bool       `toml:"get_device_info"`
-	GetWLANInfo    bool       `toml:"get_wlan_info"`
-	GetWANInfo     bool       `toml:"get_wan_info"`
-	GetDSLInfo     bool       `toml:"get_dsl_info"`
-	GetPPPInfo     bool       `toml:"get_ppp_info"`
-	GetMeshInfo    []string   `toml:"get_mesh_info"`
-	GetMeshClients bool       `toml:"get_mesh_clients"`
-	FullQueryCycle int        `toml:"full_query_cycle"`
-	Debug          bool       `toml:"debug"`
+	Devices         [][]string `toml:"devices"`
+	Timeout         int        `toml:"timeout"`
+	TLSSkipVerify   bool       `toml:"tls_skip_verify"`
+	GetDeviceInfo   bool       `toml:"get_device_info"`
+	GetWLANInfo     bool       `toml:"get_wlan_info"`
+	GetWANInfo      bool       `toml:"get_wan_info"`
+	GetDSLInfo      bool       `toml:"get_dsl_info"`
+	GetPPPInfo      bool       `toml:"get_ppp_info"`
+	GetMeshInfo     []string   `toml:"get_mesh_info"`
+	GetMeshClients  bool       `toml:"get_mesh_clients"`
+	MeshClientTypes []string   `toml:"mesh_client_types"`
+	FullQueryCycle  int        `toml:"full_query_cycle"`
+	Debug           bool       `toml:"debug"`
 
 	Log telegraf.Logger
 
@@ -81,15 +82,17 @@ type FritzBox struct {
 
 func NewFritzBox() *FritzBox {
 	return &FritzBox{
-		Devices:        [][]string{{"fritz.box", "", ""}},
-		Timeout:        5,
-		GetDeviceInfo:  true,
-		GetWLANInfo:    true,
-		GetWANInfo:     true,
-		GetDSLInfo:     true,
-		GetPPPInfo:     true,
-		GetMeshInfo:    []string{},
-		FullQueryCycle: 6,
+		Devices:         [][]string{{"fritz.box", "", ""}},
+		Timeout:         5,
+		GetDeviceInfo:   true,
+		GetWLANInfo:     true,
+		GetWANInfo:      true,
+		GetDSLInfo:      true,
+		GetPPPInfo:      true,
+		GetMeshInfo:     []string{},
+		GetMeshClients:  false,
+		MeshClientTypes: []string{"WLAN"},
+		FullQueryCycle:  6,
 
 		deviceInfos: make(map[string]*deviceInfo)}
 }
@@ -114,8 +117,10 @@ func (plugin *FritzBox) SampleConfig() string {
   # get_ppp_info = true
   ## Process Mesh infos for selected hosts (must be one of the hosts defined in devices)
   # get_mesh_info = []
-  ## Get all mesh clients from mesh infos
+  ## Get all mesh clients from mesh infos  
   # get_mesh_clients = false
+  ## The type of mesh clients to report (WLAN, LAN; empty list reports all)
+  # mesh_client_types = ["WLAN"]
   ## The cycle count, at which low-traffic stats are queried
   # full_query_cycle = 6
   ## Enable debug output
@@ -456,7 +461,7 @@ func (plugin *FritzBox) processHostsMeshService(a telegraf.Accumulator, deviceIn
 		a.AddCounter("fritzbox_mesh", fields, tags)
 	}
 	if plugin.GetMeshClients {
-		clientPaths := meshList.getClientPaths()
+		clientPaths := meshList.getClientPaths(plugin.MeshClientTypes)
 		for _, clientPath := range clientPaths {
 			clientDataRates := clientPath.getDataRates()
 			tags := make(map[string]string)
