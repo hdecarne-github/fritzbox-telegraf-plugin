@@ -23,3 +23,7 @@ SOFTWARE.
 ### v0.2.2 (2023-02-19)
 * Add tls_skip_verify option to ignore invalid certificates (use at your own risk)
 * Update dependencies
+
+### v0.3.0 (2023-07-02)
+* Add fritz_mesh_client measurement
+* Update dependencies

@@ -37,6 +37,10 @@ To use it you have to create a plugin specific config file (e.g. /etc/telegraf/f
   # get_ppp_info = true
   ## Process Mesh infos for selected hosts (must be one of the hosts defined in devices)
   # get_mesh_info = []
+  ## Get all mesh clients from mesh info
+  # get_mesh_clients = false
+  ## The type of mesh clients to report (WLAN, LAN; empty list reports all)
+  # mesh_client_types = ["WLAN"]
   ## The cycle count, at which low-traffic stats are queried
   # full_query_cycle = 6
   ## Enable debug output
@@ -54,7 +58,7 @@ To enable the plugin within your Telegraf instance, add the following section to
 The polling interval defined here interacts with the **full_query_cycle** option above. The plugin gathers it's stats every 10s. Every 6th run (60s) it performs all configured queries. In between only the WAN stats are queried. By adapting the two options **poll_interval** and **full_query_cycle** you control the update frequency as well as the resulting system load.
 
 #### Device Info (get_device_info)
-Reports the **fritzbox_device** measurement:
+Reports the `fritzbox_device` measurement:
 ```
 fritzbox_device,fritz_device=fritz.box,service=DeviceInfo1 uptime=773607i,model_name="FRITZ!Box 7590" 1647203021364800000
 ```
@@ -63,7 +67,7 @@ The uptime (in seconds) as well as the model name are reported for every configu
 ![Device Info](docs/screen_device.png)
 
 #### WLAN Info (get_wlan_info)
-Reports the **fritzbox_wlan** measurement:
+Reports the `fritzbox_wlan` measurement:
 ```
 fritzbox_wlan,fritz_wlan_channel=fritz.box:MySSID:11,fritz_wlan_network=fritz.box:MySSID:2G,fritz_device=fritz.box,service=WLANConfiguration1 total_associations=2i 1647203147521085000
 fritzbox_wlan,fritz_wlan_channel=fritz.box:MySSID:44,fritz_wlan_network=fritz.box:MySSID:5G,fritz_device=fritz.box,service=WLANConfiguration2 total_associations=7i 1647203148048754000
@@ -73,7 +77,7 @@ For every device and every configured WLAN (2.4 GHz and 5 GHz are considered sep
 ![WLAN Info](docs/screen_wlan.png)
 
 #### Mesh Info (get_mesh_info)
-Reports the **fritzbox_mesh** measurement:
+Reports the `fritzbox_mesh` measurement:
 ```
 fritzbox_mesh,fritz_device=fritz.box,fritz_mesh_node_link=slave1:WLAN:UPLINK:5G:0,fritz_mesh_node_name=slave1,fritz_mesh_node_type=WLAN,service=Hosts1 max_data_rate_rx=1300000i,max_data_rate_tx=1300000i,cur_data_rate_rx=1300000i,cur_data_rate_tx=1170000i 1647924367458027000
 ```
@@ -81,8 +85,15 @@ The current links as well as their stats are reported.
 
 ![Mesh Info](docs/screen_mesh.png)
 
+#### Mesh Clients (get_mesh_clients)
+Reports the ´fritzbox_mesh` measurement:
+```
+fritzbox_mesh_client,fritz_device=fritz.box,fritz_mesh_client_link=fritzbox:WLAN:AP:5G:0,fritz_mesh_client_name=client1,fritz_mesh_client_peer=fritzbox,fritz_mesh_client_type=WLAN,fritz_service=Hosts1 max_data_rate_rx=866700i,max_data_rate_tx=866700i,cur_data_rate_rx=866000i,cur_data_rate_tx=585000i 1688312117275357000
+```
+The clients, their peer and links as well as the link's parameters are reported. The type of clients reported is determined by the `mesh_client_types` configuration.
+
 #### WAN Info (get_wan_info)
-Reports the **fritzbox_wan** measurement:
+Reports the `fritzbox_wan` measurement:
 ```
 fritzbox_wan,fritz_device=fritz.box,service=WANCommonInterfaceConfig1 layer1_downstream_max_bit_rate=240893000i,upstream_current_max_speed=6255i,downstream_current_max_speed=8027i,total_bytes_sent=31387049656i,total_bytes_received=214361402812i,layer1_upstream_max_bit_rate=49741000i 1647203434928636000
 ```
@@ -91,7 +102,7 @@ The current stats of the WAN link are reported (bandwidth, current rates, transf
 ![WAN Info](docs/screen_wan.png)
 
 #### DSL Info (get_dsl_info)
-Reports the **fritzbox_dsl** measurement:
+Reports the `fritzbox_dsl` measurement:
 ```
 fritzbox_dsl,fritz_device=fritz.box,service=WANDSLInterfaceConfig1 downstream_power=515i,receive_blocks=181681151i,cell_delin=0i,errored_secs=4i,atuc_hec_errors=0i,upstream_max_rate=49741i,downstream_attenuation=140i,link_retrain=1i,crc_errors=6i,downstream_max_rate=240893i,downstream_noise_margin=110i,transmit_blocks=78704877i,init_errors=0i,loss_of_framing=0i,severly_errored_secs=0i,fec_errors=0i,hec_errors=0i,downstream_curr_rate=236716i,upstream_attenuation=80i,upstream_power=498i,init_timeouts=0i,atuc_fec_errors=0i,atuc_crc_errors=1i,upstream_curr_rate=46719i,upstream_noise_margin=80i 1647203965519168000
 ```
@@ -100,7 +111,7 @@ The current statistics of the DSL line are reported.
 ![DSL Info](docs/screen_dsl.png)
 
 #### PPP Info (get_ppp_info)
-Reports the **fritzbox_ppp** measurement:
+Reports the `fritzbox_ppp` measurement:
 ```
 fritzbox_ppp,fritz_device=fritz.box,service=WANPPPConnection1 upstream_max_bit_rate=45048452i,downstream_max_bit_rate=56093007i,uptime=774164i 1647204091697400000
 ```
