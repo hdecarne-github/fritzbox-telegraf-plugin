@@ -88,6 +88,8 @@ fritzbox_mesh_client,fritz_device=fritz.box,fritz_mesh_client_link=fritzbox:WLAN
 ```
 The clients, their peer and links as well as the link's parameters are reported. The type of clients reported is determined by the `mesh_client_types` configuration.
 
+![Mesh Clients](screen_mesh_clients.png)
+
 #### WAN Info (get_wan_info)
 Reports the `fritzbox_wan` measurement:
 ```
