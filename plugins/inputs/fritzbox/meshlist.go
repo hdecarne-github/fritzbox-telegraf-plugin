@@ -7,6 +7,10 @@
 
 package fritzbox
 
+import (
+	"github.com/google/uuid"
+)
+
 type meshList struct {
 	SchemaVersion string         `json:"schema_version"`
 	Nodes         []meshListNode `json:"nodes"`
@@ -29,6 +33,14 @@ type meshListNode struct {
 	IsMeshed       bool                    `json:"is_meshed"`
 	MeshRole       string                  `json:"mesh_role"`
 	NodeInterfaces []meshListNodeInterface `json:"node_interfaces"`
+}
+
+func (node *meshListNode) hasValidDeviceName() bool {
+	if node.DeviceName == "" {
+		return false
+	}
+	_, err := uuid.Parse(node.DeviceName)
+	return err != nil
 }
 
 func (node *meshListNode) isMaster() bool {
@@ -137,7 +149,7 @@ func (meshList *meshList) collectMasterSlavePaths(paths []*meshPath, path *meshP
 	updatedPaths := paths
 	peerNode := meshList.lookupNode(path.getPeerNodeUid())
 	if peerNode != nil && !path.contains(peerNode) {
-		if peerNode.isSlave() {
+		if peerNode.isSlave() && peerNode.hasValidDeviceName() {
 			for peerInterfaceIndex, peerInterface := range peerNode.NodeInterfaces {
 				for peerLinkIndex, peerLink := range peerInterface.NodeLinks {
 					if peerLink.isConnectedTo(path.nodeInterface) {
@@ -173,7 +185,7 @@ func (meshList *meshList) collectMasterSlavePaths(paths []*meshPath, path *meshP
 func (meshList *meshList) getClientPaths(clientTypes []string) []*meshPath {
 	paths := make([]*meshPath, 0)
 	for clientNodeIndex, clientNode := range meshList.Nodes {
-		if !clientNode.IsMeshed {
+		if !clientNode.IsMeshed && clientNode.hasValidDeviceName() {
 			for clientInterfaceIndex, clientInterface := range clientNode.NodeInterfaces {
 				includeClient := len(clientTypes) == 0
 				for _, clientType := range clientTypes {
@@ -182,6 +194,7 @@ func (meshList *meshList) getClientPaths(clientTypes []string) []*meshPath {
 						break
 					}
 				}
+
 				if includeClient {
 					for clientLinkIndex, clientLink := range clientInterface.NodeLinks {
 						if clientLink.isConnected() {
