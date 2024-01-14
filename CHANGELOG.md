@@ -11,24 +11,24 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-### v0.1.1 (2022-03-13)
-* Initial release
-
-### v0.1.2 (2022-03-19)
-* Provide pre-build archives
-
-### v0.2.0 (2022-04-02)
-* Add fritz_mesh measurement
-
-### v0.2.2 (2023-02-19)
-* Add tls_skip_verify option to ignore invalid certificates (use at your own risk)
+### v0.4.0 (2024-01-14)
+* Filter uuid mesh clients
+* Set config web client timeout to 10s
 * Update dependencies
 
 ### v0.3.0 (2023-07-02)
 * Add fritz_mesh_client measurement
 * Update dependencies
 
-### v0.4.0 (2024-01-14)
-* Filter uuid mesh clients
-* Set config web client timeout to 10s
+### v0.2.2 (2023-02-19)
+* Add tls_skip_verify option to ignore invalid certificates (use at your own risk)
 * Update dependencies
+
+### v0.2.0 (2022-04-02)
+* Add fritz_mesh measurement
+
+### v0.1.2 (2022-03-19)
+* Provide pre-build archives
+
+### v0.1.1 (2022-03-13)
+* Initial release
