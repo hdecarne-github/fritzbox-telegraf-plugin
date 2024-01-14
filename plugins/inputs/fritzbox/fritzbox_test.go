@@ -1,6 +1,6 @@
 // fritzbox_test.go
 //
-// # Copyright (C) 2022-2023 Holger de Carne
+// # Copyright (C) 2022-2024 Holger de Carne
 //
 // This software may be modified and distributed under the terms
 // of the MIT license.  See the LICENSE file for details.
