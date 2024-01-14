@@ -83,7 +83,7 @@ type FritzBox struct {
 func NewFritzBox() *FritzBox {
 	return &FritzBox{
 		Devices:         [][]string{{"fritz.box", "", ""}},
-		Timeout:         5,
+		Timeout:         10,
 		GetDeviceInfo:   true,
 		GetWLANInfo:     true,
 		GetWANInfo:      true,
