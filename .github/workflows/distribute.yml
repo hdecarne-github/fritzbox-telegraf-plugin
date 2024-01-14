@@ -55,7 +55,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: build-dist
+          name: ${{ runner.os }}-distribute-artifacts
           path: build/dist
           retention-days: 7
           compression-level: 0
