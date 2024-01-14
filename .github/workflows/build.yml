@@ -23,12 +23,33 @@ jobs:
           go-version-file: 'go.mod'
           check-latest: true
           cache: false
-      - name: Set up Caching
+      - name: Set up Caching for Linux
+        if: runner.os == 'Linux'
         uses: actions/cache@v3
         with:
           path: |
             ~/.cache/go-build
-            ~/go
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Set up Caching for macOS
+        if: runner.os == 'macOS'
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/Library/Caches/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Set up Caching for Windows
+        if: runner.os == 'Windows'
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~\AppData\Local\go-build
+            ~\go\pkg\mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
