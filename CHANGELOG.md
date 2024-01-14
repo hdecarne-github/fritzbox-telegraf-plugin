@@ -28,7 +28,7 @@ SOFTWARE.
 * Add fritz_mesh_client measurement
 * Update dependencies
 
-### v0.3.1 (2023-07-02)
+### v0.4.0 (2024-01-14)
 * Filter uuid mesh clients
 * Set config web client timeout to 10s
 * Update dependencies
