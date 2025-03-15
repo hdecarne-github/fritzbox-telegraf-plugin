@@ -55,5 +55,3 @@ jobs:
             ${{ runner.os }}-go-
       - name: Run Build
         run: make dist check
-      - name: Run SonarQube
-        uses: sonarsource/sonarcloud-github-action@master
