@@ -18,6 +18,13 @@ make
 To build the plugin, Go version 1.16 or higher is required. The resulting plugin binary will be written to `./build/bin`.
 Copy the either extracted or built plugin binary to a location of your choice (e.g. /usr/local/bin/telegraf/).
 
+### Run / Build via Docker
+If the plugin is not available for your desired target platform (e.g. for your Rapberry Pi), you can still build and run it using Docker, regardless of whether Telegraf is installed on your machine. To do this, simply execute the corresponding script in the /docker/ directory.
+
+For building the plugin, run the docker-build.sh script. Before executing, you might need to make the script executable with the command chmod +x docker-build.sh. To start the plugin, use the docker-run.sh script, making it executable if necessary with chmod +x docker-run.sh.
+
+Before starting, ensure to customize the two configuration files located in the /docker/config/ directory according to your needs.
+
 ### Configuration
 This is an [external plugin](https://github.com/influxdata/telegraf/blob/master/docs/EXTERNAL_PLUGINS.md) which has to be integrated via Telegraf's [excecd plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/execd).
 
