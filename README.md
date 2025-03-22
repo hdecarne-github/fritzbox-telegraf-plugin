@@ -1,6 +1,11 @@
 [![Downloads](https://img.shields.io/github/downloads/hdecarne-github/fritzbox-telegraf-plugin/total.svg)](https://github.com/hdecarne-github/fritzbox-telegraf-plugin/releases)
 [![Build](https://github.com/hdecarne-github/fritzbox-telegraf-plugin/actions/workflows/build.yml/badge.svg)](https://github.com/hdecarne-github/fritzbox-telegraf-plugin/actions/workflows/build.yml)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=hdecarne-github_fritzbox-telegraf-plugin&metric=coverage)](https://sonarcloud.io/summary/new_code?id=hdecarne-github_fritzbox-telegraf-plugin)
+
+> [!NOTE]
+> From Telegraf release v1.35.0 on this plugin is a core plugin of Telegraf
+> and no longer needs to be installed separately as an external plugin.
+>
+> See https://github.com/influxdata/telegraf/tree/master/plugins/inputs/fritzbox for further details.
 
 ## About fritzbox-telegraf-plugin
 This [Telegraf](https://github.com/influxdata/telegraf) input plugin gathers stats from [AVM](https://avm.de/) FRITZ!Box devices. It uses the device's [TR-064](https://avm.de/service/schnittstellen/) interfaces to retrieve the stats. DSL routers as well as WLAN repeaters are supported.
